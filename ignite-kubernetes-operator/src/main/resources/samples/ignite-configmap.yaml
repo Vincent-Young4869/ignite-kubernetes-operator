@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ignite-configmap
+  namespace: imdb
+data:
+  node-configuration.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <beans xmlns="http://www.springframework.org/schema/beans"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="
+            http://www.springframework.org/schema/beans
+            http://www.springframework.org/schema/beans/spring-beans.xsd">
+        <!-- Define metrics exporter configs: set up prometheus http server and register stats collector -->
+
+        <bean class="org.apache.ignite.configuration.IgniteConfiguration">
+            <!-- Define opensensus metrics exporter configs -->  
+
+            <!-- Disable continuous metrics log -->
+            <!--        <property name="metricsLogFrequency" value="0"/>-->
+            <property name="metricsUpdateFrequency" value="1000"/>
+            <!-- Enable peer class loading. -->
+            <property name="peerClassLoadingEnabled" value="true"/>
+            <!-- Set deployment mode. -->
+            <property name="deploymentMode" value="CONTINUOUS"/>
+            <property name="workDirectory" value="/opt/gridgain/work"/>
+            <property name="dataStorageConfiguration">
+                <bean class="org.apache.ignite.configuration.DataStorageConfiguration">
+                    <property name="defaultDataRegionConfiguration">
+                        <bean class="org.apache.ignite.configuration.DataRegionConfiguration">
+                            <property name="name" value="DEFAULT_REGION"/>
+                            <property name="persistenceEnabled" value="false"/>
+                            <property name="metricsEnabled" value="true"/>
+                            <property name="initialSize" value="#{50 * 1024 * 1024}"/>
+                            <property name="maxSize" value="#{50 * 1024 * 1024}"/>
+                        </bean>
+                    </property>
+                    <property name="dataRegionConfigurations">
+                        <list>
+                            <bean class="org.apache.ignite.configuration.DataRegionConfiguration">
+                                <property name="name" value="IMDB_REGION"/>
+                                <property name="persistenceEnabled" value="true"/>
+                                <property name="metricsEnabled" value="true"/>
+                                <property name="initialSize" value="#{128 * 1024 * 1024}"/>
+                                <property name="maxSize" value="#{128 * 1024 * 1024}"/>
+                            </bean>
+                        </list>
+                    </property>
+                    <property name="walPath" value="/opt/gridgain/wal"/>
+                    <property name="walArchivePath" value="/opt/gridgain/walarchive"/>
+                </bean>
+            </property>
+            <property name="discoverySpi">
+                <bean class="org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi">
+                    <property name="ipFinder">
+                        <bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.kubernetes.TcpDiscoveryKubernetesIpFinder">
+                            <property name="namespace" value="imdb"/>
+                            <property name="serviceName" value="ignite-service"/>
+                        </bean>
+                    </property>
+                </bean>
+            </property>
+                
+        </bean>
+    </beans>

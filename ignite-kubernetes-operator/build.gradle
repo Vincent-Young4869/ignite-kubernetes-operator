@@ -1,0 +1,134 @@
+plugins {
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // https://mvnrepository.com/artifact/io.javaoperatorsdk/operator-framework-spring-boot-starter
+    implementation 'io.javaoperatorsdk:operator-framework-spring-boot-starter:5.5.0'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+/************* Dockerization Related ******************/
+import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
+import com.bmuschko.gradle.docker.tasks.image.Dockerfile
+
+import java.nio.file.Paths
+
+//load "config" property from gradle-properties.groovy
+loadConfiguration()
+
+def loadConfiguration() {
+    def imgRegistry = hasProperty('imgRegistry') ? imgRegistry : 'yyc'
+
+    if (!['yyc', 'local'].contains(imgRegistry)) {
+        System.err.println("Please set -PimgRegistry to yyc, or local")
+        System.exit(1)
+    }
+    ext.setProperty("environment", imgRegistry)
+    println("Gradle environment is set to $imgRegistry")
+
+    def configFile = file('gradle-properties.groovy')
+    def config = new ConfigSlurper(imgRegistry).parse(configFile.toURI().toURL())
+    ext.setProperty("config", config)
+
+    def jarBaseName = project.name
+    ext.setProperty("jarBaseName", jarBaseName)
+
+    def jarVersion = semver.version
+    ext.setProperty("jarVersion", jarVersion)
+
+    def jarFileName = "$project.name-${jarVersion}.jar"
+    ext.setProperty("jarFileName", jarFileName)
+
+    def jarArchivePath = "$buildDir/libs/$jarFileName"
+    ext.setProperty("jarArchivePath", jarArchivePath)
+
+    def localImageTag = "$jarVersion-" + ("hostname".execute().text.trim())
+
+    if (!hasProperty('imageTag')) {//allow imageTag to be set when call gradlew
+        ext.setProperty("imageTag", imgRegistry == 'local' ? localImageTag : jarVersion)
+    }
+}
+
+tasks.register('printProps') {
+    doLast {
+        println "environment: $environment"
+        println "jarBaseName: $jarBaseName"
+        println "jarVersion: $jarVersion"
+        println "jarFileName: $jarFileName"
+        println "jarArchivePath: $jarArchivePath"
+        println "docker_expose_port: $config.docker_expose_port"
+        println "imageTag: $imageTag"
+    }
+}
+
+
+tasks.register('dockerLogin') {
+    doLast {
+        def dockerUsername = System.getenv('DOCKER_USERNAME')
+        def dockerPassword = System.getenv('DOCKER_PASSWORD')
+
+        if (dockerUsername && dockerPassword) {
+            exec {
+                commandLine 'docker', 'login', '-u', dockerUsername, '--password-stdin'
+                standardInput = new ByteArrayInputStream(dockerPassword.bytes)
+            }
+        } else {
+            throw new GradleException("Environment variables DOCKER_USERNAME and DOCKER_PASSWORD must be set")
+        }
+    }
+}
+
+bootJar {
+    archiveFileName.set("$jarBaseName-$jarVersion.${archiveExtension.get()}")
+}
+
+tasks.register('assembleDocker', Copy) {
+    dependsOn build
+    from jarArchivePath
+    into Paths.get(buildDir as String, 'docker')
+}
+
+//https://bmuschko.github.io/gradle-docker-plugin/
+tasks.register('createDockerfile', Dockerfile) {
+    destFile.set(new File(assembleDocker.destinationDir as String, 'Dockerfile'))
+    def workingDirPath = "/opt/$rootProject.name"
+    def jarFullName = "$workingDirPath/${jarBaseName + "-" + jarVersion}.jar"
+    from 'vincentyoung4869/ubuntu:23.10-jdk17'
+    runCommand('''DEBIAN_FRONTEND=noninteractive apt-get update \\
+    && apt-get -y --no-install-recommends install tzdata \\
+    && apt-get clean \\
+    && rm -rf /var/lib/apt/lists/*''')
+
+    runCommand('useradd -u 11000 yyc --create-home')
+    user('yyc')
+
+    volume('/tmp')
+    workingDir(workingDirPath)
+    copyFile(new Dockerfile.CopyFile(jarFileName, jarFullName).withChown("yyc:yyc"))
+
+    exposePort(config.docker_expose_port)
+    entryPoint('java', '-jar', jarFullName)
+}
+
+//https://bmuschko.github.io/gradle-docker-plugin/
+tasks.register('buildImage', DockerBuildImage) {
+    dependsOn assembleDocker
+    dependsOn createDockerfile
+    dependsOn dockerLogin
+
+    inputDir.set(assembleDocker.destinationDir)
+    noCache.set(true)
+    images.set(["$config.dockerhubName/$jarBaseName:$imageTag"])
+}
+
+tasks.register('pushImage', DockerPushImage) {
+    dependsOn buildImage
+    images.set(["$config.dockerhubName/$jarBaseName:$imageTag"])
+}

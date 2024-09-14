@@ -1,0 +1,73 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.2.4'
+    id 'io.spring.dependency-management' version '1.1.0'
+    id "com.bmuschko.docker-remote-api" version "9.4.0"
+    id "net.thauvin.erik.gradle.semver" version "1.0.4"
+    id "com.google.cloud.artifactregistry.gradle-plugin" version "2.2.0"
+}
+
+ext {
+}
+
+def Properties props = new Properties()
+def propFile = file('version.properties')
+def versionCode = '';
+if (propFile.canRead()) {
+    props.load(new FileInputStream(propFile))
+    if (props != null && props.containsKey('version.semver')) {
+        versionCode = props['version.semver'].toString()
+    }
+}
+
+allprojects {
+    group = 'org.example'
+    version versionCode
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'idea'
+    apply plugin: 'checkstyle'
+    apply plugin: 'jacoco'
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'com.google.cloud.artifactregistry.gradle-plugin'
+
+    sourceCompatibility = 1.17
+
+    configurations {
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+    }
+
+    repositories {
+        mavenCentral()
+        maven { url "https://www.gridgainsystems.com/nexus/content/repositories/external" }
+        jcenter()
+        google()
+    }
+
+    dependencies {
+        // https://mvnrepository.com/artifact/io.fabric8/kubernetes-client
+        implementation 'io.fabric8:kubernetes-client:6.13.1'
+        // https://mvnrepository.com/artifact/io.fabric8/crd-generator-apt
+        annotationProcessor 'io.fabric8:crd-generator-apt:6.13.1'
+
+        // https://mvnrepository.com/artifact/io.javaoperatorsdk/operator-framework
+        implementation 'io.javaoperatorsdk:operator-framework:4.9.2'
+
+        // sha256
+        // https://mvnrepository.com/artifact/commons-codec/commons-codec
+        implementation 'commons-codec:commons-codec:1.17.1'
+
+
+        testImplementation platform('org.junit:junit-bom:5.10.0')
+        testImplementation 'org.junit.jupiter:junit-jupiter'
+
+        if (!name.endsWith("util")) {
+            apply plugin: 'com.bmuschko.docker-remote-api'
+        }
+    }
+}

@@ -1,0 +1,104 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: ignite-operator-clusterrole
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - services
+      - services/finalizers
+      - endpoints
+      - persistentvolumeclaims
+      - events
+      - configmaps
+      - secrets
+      - namespaces
+      - serviceaccounts
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+      - daemonsets
+      - replicasets
+      - statefulsets
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - apps
+    resourceNames:
+      - yyc-ignite-operator
+    resources:
+      - deployments/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - com.yyc
+    resources:
+      - '*'
+    verbs:
+      - '*'
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - clusterroles
+      - clusterrolebindings
+      - roles
+      - rolebindings
+    verbs:
+      - '*'
+  - apiGroups:
+      - storage.k8s.io
+    resources:
+      - storageclasses
+    verbs:
+      - '*'
+  - apiGroups:
+      - "apiextensions.k8s.io"
+    resources:
+      - "customresourcedefinitions"
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ignite-operator-sa
+  namespace: ignite-operator
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ignite-operator-clusterrole-binding
+subjects:
+  - kind: ServiceAccount
+    name: ignite-operator-sa
+    namespace: ignite-operator
+roleRef:
+  kind: ClusterRole
+  name: ignite-operator-clusterrole
+  apiGroup: rbac.authorization.k8s.io

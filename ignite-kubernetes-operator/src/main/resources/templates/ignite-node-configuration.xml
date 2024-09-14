@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+            http://www.springframework.org/schema/beans
+            http://www.springframework.org/schema/beans/spring-beans.xsd">
+    <!-- Define metrics exporter configs: set up prometheus http server and register stats collector -->
+
+    <bean class="org.apache.ignite.configuration.IgniteConfiguration">
+        <!-- Define opensensus metrics exporter configs -->
+
+        <!-- Disable continuous metrics log -->
+        <!--        <property name="metricsLogFrequency" value="0"/>-->
+        <property name="metricsUpdateFrequency" value="1000"/>
+        <!-- Enable peer class loading. -->
+        <property name="peerClassLoadingEnabled" value="true"/>
+        <!-- Set deployment mode. -->
+        <property name="deploymentMode" value="CONTINUOUS"/>
+        <!-- Set streamer thread pool size. -->
+        <property name="dataStorageConfiguration">
+            <bean class="org.apache.ignite.configuration.DataStorageConfiguration">
+                <property name="defaultDataRegionConfiguration">
+                    <bean class="org.apache.ignite.configuration.DataRegionConfiguration">
+                        <property name="name" value="DEFAULT_REGION"/>
+                        <property name="persistenceEnabled" value="false"/>
+                        <property name="metricsEnabled" value="true"/>
+                        <property name="initialSize" value="#{50 * 1024 * 1024}"/>
+                        <property name="maxSize" value="#{50 * 1024 * 1024}"/>
+                    </bean>
+                </property>
+                <property name="dataRegionConfigurations">
+                    <list>
+                        <bean class="org.apache.ignite.configuration.DataRegionConfiguration">
+                            <property name="name" value="RELATIONAL_DATA_REGION"/>
+                            <property name="persistenceEnabled" value="false"/>
+                            <property name="metricsEnabled" value="true"/>
+                            <property name="initialSize" value="#{128 * 1024 * 1024}"/>
+                            <property name="maxSize" value="#{128 * 1024 * 1024}"/>
+                        </bean>
+                    </list>
+                </property>
+            </bean>
+        </property>
+        <property name="discoverySpi">
+            <bean class="org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi">
+                <property name="ipFinder">
+                    <bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.kubernetes.TcpDiscoveryKubernetesIpFinder">
+                        <property name="namespace" value="yyc-test"/>
+                        <property name="serviceName" value="ignite-service"/>
+                    </bean>
+                </property>
+            </bean>
+        </property>
+
+    </bean>
+</beans>

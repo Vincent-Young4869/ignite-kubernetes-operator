@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yyc-ignite-operator
+  namespace: ignite-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: yyc-ignite-operator
+  template:
+    metadata:
+      labels:
+        name: yyc-ignite-operator
+    spec:
+      serviceAccountName: ignite-operator-sa
+      containers:
+        - name: yyc-ignite-operator
+          image: "vincentyoung4869/ignite-operator:1.0.0-MacBook-Pro-2"
+#          imagePullPolicy: "Always"

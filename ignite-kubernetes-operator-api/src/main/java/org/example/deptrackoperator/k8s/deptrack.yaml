@@ -1,0 +1,13 @@
+apiVersion: com.baeldung/v1
+kind: DeptrackResource
+metadata:
+  namespace: default
+  name: deptrack1
+  labels:
+    project: tutorials
+  annotations:
+    author: Baeldung
+
+spec:
+  apiServerImage: "registry.k8s.io/e2e-test-images/agnhost:2.39"
+  ingressHostname: deptrack.172.31.42.16.np.io

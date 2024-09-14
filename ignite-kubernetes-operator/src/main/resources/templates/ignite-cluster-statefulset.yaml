@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ignite-cluster
+  namespace: yyc-test
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ignite
+  serviceName: ignite-service
+  template:
+    metadata:
+      labels:
+        app: ignite
+        network-access: allowed
+    spec:
+      containers:
+        - name: ignite-node
+          image: gridgain/community:8.8.42-openjdk17
+          env:
+            - name: OPTION_LIBS
+              value: ignite-kubernetes,ignite-rest-http
+            - name: CONFIG_URI
+              value: file:///opt/ignite/config/node-configuration.xml
+            - name: JVM_OPTS
+              value: -DIGNITE_WAL_MMAP=false -DIGNITE_WAIT_FOR_BACKUPS_ON_SHUTDOWN=true
+                -server -Xms2G -Xmx2G -XX:+AlwaysPreTouch -XX:+UseG1GC -XX:+ScavengeBeforeFullGC
+                -XX:+DisableExplicitGC -XX:MetaspaceSize=200M -XX:MinMetaspaceFreeRatio=40
+                -XX:MaxMetaspaceFreeRatio=80 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=5555
+                -Djava.rmi.server.hostname=127.0.0.1 -Dcom.sun.management.jmxremote.rmi.port=5555
+                -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
+            - name: IGNITE_JMX_PORT
+              value: "5555"
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /ignite?cmd=version
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          ports:
+            - containerPort: 47100
+              protocol: TCP
+            - containerPort: 47500
+              protocol: TCP
+            - containerPort: 49112
+              protocol: TCP
+            - containerPort: 11211
+              protocol: TCP
+            - containerPort: 10800
+              protocol: TCP
+            - containerPort: 8080
+              protocol: TCP
+            - containerPort: 5555
+              protocol: TCP
+            - containerPort: 1234
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /ignite?cmd=probe
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          resources:
+            limits:
+              cpu: "2"
+              memory: 8Gi
+            requests:
+              cpu: "2"
+              memory: 8Gi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /opt/ignite/config
+              name: config-vol
+      securityContext:
+        fsGroup: 2000
+      serviceAccountName: ignite-sa
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - configMap:
+            defaultMode: 420
+            name: test-ignite-configmap
+          name: config-vol

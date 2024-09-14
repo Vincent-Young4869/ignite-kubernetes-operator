@@ -1,0 +1,33 @@
+apiVersion: com.yyc/v1
+kind: IgniteResource
+metadata:
+  namespace: yyc-test
+  name: test
+
+spec:
+  replicas: 2
+  igniteSaSpec:
+    googleServiceAccount: ""
+  igniteImage: "gridgain/community"
+  igniteVersion: "8.8.42-openjdk17"
+  igniteOptionalLibs: "ignite-kubernetes,ignite-rest-http"
+  jvmOpts: "-DIGNITE_WAL_MMAP=false -DIGNITE_WAIT_FOR_BACKUPS_ON_SHUTDOWN=true
+                -server -Xms1G -Xmx1G -XX:+AlwaysPreTouch -XX:+UseG1GC -XX:+ScavengeBeforeFullGC
+                -XX:+DisableExplicitGC -XX:MetaspaceSize=200M -XX:MinMetaspaceFreeRatio=40
+                -XX:MaxMetaspaceFreeRatio=60"
+  igniteNodeCpu: "1"
+  igniteNodeMemory: "2Gi"
+  k8sServiceSpec:
+    type: LoadBalancer
+    annotations:
+      my-load-balancer-type: "Internal"
+  igniteConfigMapSpec:
+    defaultDataRegionSize: "110 * 1024 * 1024"
+    relationalDataRegionSize: "110 * 1024 * 1024"
+  persistenceSpec:
+    persistenceEnabled: true
+    dataVolumeSpec:
+      name: "data-vol"
+      mountPath: "/opt/gridgain/work"
+      accessModes: ["ReadWriteOnce"]
+      storage: "2Gi"

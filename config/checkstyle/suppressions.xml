@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE suppressions PUBLIC
+        "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+        "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<suppressions>
+    <suppress checks="JavadocMethod" files=".+\.(java)$"/>
+    <suppress checks="SummaryJavadoc" files=".+\.(java)$"/>
+    <suppress checks="NonEmptyAtclauseDescription" files=".+\.(java)$"/>
+    <suppress checks="JavadocParagraph" files=".+\.(java)$"/>
+    <suppress checks="invalidJavadocPosition" files=".+\.(java)$"/>
+    <suppress checks="SeparatorWrap" files=".+\.(java)$"/>
+</suppressions>
