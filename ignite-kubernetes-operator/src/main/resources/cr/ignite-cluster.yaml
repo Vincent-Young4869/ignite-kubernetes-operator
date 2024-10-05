@@ -1,7 +1,7 @@
 apiVersion: com.yyc/v1
 kind: IgniteResource
 metadata:
-  namespace: yyc-test
+  namespace: ignite
   name: test
 
 spec:
@@ -12,7 +12,7 @@ spec:
   igniteVersion: "8.8.42-openjdk17"
   igniteOptionalLibs: "ignite-kubernetes,ignite-rest-http"
   jvmOpts: "-DIGNITE_WAL_MMAP=false -DIGNITE_WAIT_FOR_BACKUPS_ON_SHUTDOWN=true
-                -server -Xms1G -Xmx1G -XX:+AlwaysPreTouch -XX:+UseG1GC -XX:+ScavengeBeforeFullGC
+                -server -Xms3G -Xmx3G -XX:+AlwaysPreTouch -XX:+UseG1GC -XX:+ScavengeBeforeFullGC
                 -XX:+DisableExplicitGC -XX:MetaspaceSize=200M -XX:MinMetaspaceFreeRatio=40
                 -XX:MaxMetaspaceFreeRatio=60"
   igniteNodeCpu: "1"
@@ -25,7 +25,7 @@ spec:
     defaultDataRegionSize: "110 * 1024 * 1024"
     relationalDataRegionSize: "110 * 1024 * 1024"
   persistenceSpec:
-    persistenceEnabled: true
+    persistenceEnabled: false
     dataVolumeSpec:
       name: "data-vol"
       mountPath: "/opt/gridgain/work"

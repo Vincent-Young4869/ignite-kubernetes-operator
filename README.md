@@ -2,6 +2,8 @@
 
 A Kubernetes operator for Apache Ignite (or GridGain Ignite), implemented in Java. It allows users to manage Ignite applications and their lifecycle through native k8s tooling like kubectl.
 
+(The implementation is based on [Java Operator SDK](https://javaoperatorsdk.io/docs/) and is adopted from [flink-kubernetes-operator](https://github.com/apache/flink-kubernetes-operator) project)
+
 ## Modules Summary
 Currently, the repo includes 3 modules:
 - **examples**
