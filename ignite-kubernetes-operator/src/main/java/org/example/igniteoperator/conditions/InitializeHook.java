@@ -8,16 +8,17 @@ import org.example.igniteoperator.customresource.IgniteResource;
 import org.example.igniteoperator.dependentresource.IgniteSaResource;
 import org.example.igniteoperator.utils.type.lifecycle.ResourceLifecycleState;
 
-public class PostInitializeHook implements Condition<IgniteSaResource, IgniteResource> {
+public class InitializeHook implements Condition<IgniteSaResource, IgniteResource> {
     @Override
     public boolean isMet(DependentResource<IgniteSaResource, IgniteResource> dependentResource,
                          IgniteResource igniteResource,
                          Context<IgniteResource> context) {
-        // KubernetesClient client = context.getClient();
-        // if (igniteResource.getStatus().getResourceLifecycleState().equals(ResourceLifecycleState.CREATED)) {
-        //     igniteResource.getStatus().updateLifecycleState(ResourceLifecycleState.INITIALIZING);
-        // }
-        // client.resource(igniteResource).updateStatus();
+        if (igniteResource.getStatus().getResourceLifecycleState().equals(ResourceLifecycleState.CREATED)) {
+            KubernetesClient client = context.getClient();
+            igniteResource.getStatus().updateLifecycleState(ResourceLifecycleState.INITIALIZING);
+            IgniteResource latestResource = client.resource(igniteResource).get();
+            client.resource(latestResource).updateStatus();
+        }
         return true;
     }
 }

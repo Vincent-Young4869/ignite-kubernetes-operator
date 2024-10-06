@@ -43,6 +43,7 @@ public class IgniteStatefulSetResource extends CRUDKubernetesDependentResource<S
   protected StatefulSet desired(IgniteResource primary, Context<IgniteResource> context) {
     Map<String, String> annotations = new HashMap<>();
     annotations.put("ConfigMapMetadata", primary.getSpec().getIgniteConfigMapSpec().toString());
+    annotations.put("podConfig", primary.getSpec().getIgniteNodeSpec().toString());
     ObjectMeta meta = fromPrimary(primary,COMPONENT)
             .withAnnotations(annotations)
             .build();
@@ -113,11 +114,11 @@ public class IgniteStatefulSetResource extends CRUDKubernetesDependentResource<S
   
   @NotNull
   private static String parseDockerImageReference(IgniteResource primary) {
-    String imageVersion = StringUtils.hasText(primary.getSpec().getIgniteVersion())
-            ? ":" + primary.getSpec().getIgniteVersion().trim()
+    String imageVersion = StringUtils.hasText(primary.getSpec().getIgniteNodeSpec().getIgniteVersion())
+            ? ":" + primary.getSpec().getIgniteNodeSpec().getIgniteVersion().trim()
             : "";
-    String imageName = StringUtils.hasText(primary.getSpec().getIgniteImage())
-            ? primary.getSpec().getIgniteImage().trim()
+    String imageName = StringUtils.hasText(primary.getSpec().getIgniteNodeSpec().getIgniteImage())
+            ? primary.getSpec().getIgniteNodeSpec().getIgniteImage().trim()
             : Constants.DEFAULT_GRIDGAIN_IMAGE;
     return imageName + imageVersion;
   }
@@ -129,15 +130,15 @@ public class IgniteStatefulSetResource extends CRUDKubernetesDependentResource<S
   @NotNull
   private static Map<String,Quantity> buildResourceRequestQuantityMap(IgniteResource primary) {
     Map<String, Quantity> resourceRequest = new HashMap<>();
-    resourceRequest.put("cpu", new Quantity(primary.getSpec().getIgniteNodeCpu()));
-    resourceRequest.put("memory", new Quantity(primary.getSpec().getIgniteNodeMemory()));return resourceRequest;
+    resourceRequest.put("cpu", new Quantity(primary.getSpec().getIgniteNodeSpec().getIgniteNodeCpu()));
+    resourceRequest.put("memory", new Quantity(primary.getSpec().getIgniteNodeSpec().getIgniteNodeMemory()));return resourceRequest;
   }
   
   @NotNull
   private static Map<String,Quantity> buildResourceLimitMap(IgniteResource primary) {
     Map<String, Quantity> resourceLimit = new HashMap<>();
-    resourceLimit.put("cpu", new Quantity(primary.getSpec().getIgniteNodeCpu()));
-    resourceLimit.put("memory", new Quantity(primary.getSpec().getIgniteNodeMemory()));return resourceLimit;
+    resourceLimit.put("cpu", new Quantity(primary.getSpec().getIgniteNodeSpec().getIgniteNodeCpu()));
+    resourceLimit.put("memory", new Quantity(primary.getSpec().getIgniteNodeSpec().getIgniteNodeMemory()));return resourceLimit;
   }
   
   @NotNull
@@ -147,8 +148,8 @@ public class IgniteStatefulSetResource extends CRUDKubernetesDependentResource<S
 
   private List<EnvVar> buildEnvVarList(IgniteResource primary) {
       List<EnvVar> envVars = new ArrayList<>();
-      envVars.add(new EnvVar(OPTION_LIBS.name(), primary.getSpec().getIgniteOptionalLibs(), null));
-      envVars.add(new EnvVar(JVM_OPTS.name(), primary.getSpec().getJvmOpts(), null));
+      envVars.add(new EnvVar(OPTION_LIBS.name(), primary.getSpec().getIgniteNodeSpec().getIgniteOptionalLibs(), null));
+      envVars.add(new EnvVar(JVM_OPTS.name(), primary.getSpec().getIgniteNodeSpec().getJvmOpts(), null));
       envVars.add(new EnvVar(CONFIG_URI.name(), "file:///opt/ignite/config/node-configuration.xml", null));
       return envVars;
   }

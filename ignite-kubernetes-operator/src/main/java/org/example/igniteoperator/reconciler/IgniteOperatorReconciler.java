@@ -10,8 +10,7 @@ import io.javaoperatorsdk.operator.api.reconciler.Reconciler;
 import io.javaoperatorsdk.operator.api.reconciler.UpdateControl;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.Dependent;
 import lombok.extern.slf4j.Slf4j;
-import org.example.igniteoperator.conditions.PostDeploymentHook;
-import org.example.igniteoperator.conditions.PostInitializeHook;
+import org.example.igniteoperator.conditions.InitializeHook;
 import org.example.igniteoperator.conditions.PreInitializeHook;
 import org.example.igniteoperator.customresource.IgniteResource;
 import org.example.igniteoperator.dependentresource.*;
@@ -31,7 +30,7 @@ import static org.example.igniteoperator.utils.TimeUtils.isReconcileDurationExce
         dependents = {
                 @Dependent(name = IgniteSaResource.COMPONENT, type = IgniteSaResource.class,
                         reconcilePrecondition = PreInitializeHook.class,
-                        readyPostcondition = PostInitializeHook.class),
+                        readyPostcondition = InitializeHook.class),
                 @Dependent(name = IgniteRoleResource.COMPONENT, type = IgniteRoleResource.class,
                         dependsOn = {IgniteSaResource.COMPONENT}),
                 @Dependent(name = IgniteRoleBindingResource.COMPONENT, type = IgniteRoleBindingResource.class,
@@ -41,7 +40,6 @@ import static org.example.igniteoperator.utils.TimeUtils.isReconcileDurationExce
                 @Dependent(name = IgniteServiceResource.COMPONENT, type = IgniteServiceResource.class,
                         dependsOn = {IgniteRoleResource.COMPONENT}),
                 @Dependent(name = IgniteStatefulSetResource.COMPONENT, type = IgniteStatefulSetResource.class,
-                        // readyPostcondition = PostDeploymentHook.class,
                         dependsOn = {IgniteRoleBindingResource.COMPONENT, IgniteServiceResource.COMPONENT, IgniteConfigMapResource.COMPONENT})
         }
 )
@@ -51,7 +49,6 @@ public class IgniteOperatorReconciler implements Reconciler<IgniteResource>, Cle
 
   @Override
   public UpdateControl<IgniteResource> reconcile(IgniteResource resource, Context<IgniteResource> context) throws Exception {
-    // log.info("current status is {}", resource.getStatus());
     ResourceLifecycleState nextLifecycleState = getNextLifecycleState(resource, context);
     resource.getStatus().updateLifecycleState(nextLifecycleState);
     if (!nextLifecycleState.isTerminal()) {
