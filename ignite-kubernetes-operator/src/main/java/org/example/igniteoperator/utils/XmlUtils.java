@@ -27,7 +27,7 @@ public class XmlUtils {
   public static String updateConfigMapXmlData(Document doc,
                                               IgniteConfigMapSpec igniteConfigMapSpec,
                                               PersistenceSpec persistenceSpec,
-                                              String igniteServiceName) throws TransformerException {
+                                              String igniteServiceName, String namespace) throws TransformerException {
     doc.getDocumentElement().normalize();
     
     NodeList beanList = doc.getElementsByTagName(BEAN.tagValue());
@@ -38,7 +38,7 @@ public class XmlUtils {
       } else if (isDefaultDataRegion(bean)) {
         updateDataRegionSize(igniteConfigMapSpec.getDefaultDataRegionSize(), bean);
       } else if (isIgniteK8sIpFinder(bean)) {
-        updateIgniteK8sServiceName(igniteServiceName, bean);
+        updateIgniteK8sServiceConfig(namespace, igniteServiceName, bean);
       }
     }
     
@@ -62,13 +62,14 @@ public class XmlUtils {
     return IGNITE_K8S_IP_FINDER.equals(bean.getAttribute(CLASS.tagValue()));
   }
   
-  private static void updateIgniteK8sServiceName(String igniteServiceName, Element bean) {
+  private static void updateIgniteK8sServiceConfig(String namespace, String igniteServiceName, Element bean) {
     NodeList propertyList = bean.getElementsByTagName(PROPERTY.tagValue());
     for (int j = 0; j < propertyList.getLength(); j++) {
       Element property = (Element) propertyList.item(j);
-      if ("serviceName".equals(property.getAttribute(NAME.tagValue()))) {
+      if ("namespace".equals(property.getAttribute(NAME.tagValue()))) {
+        property.setAttribute(VALUE.tagValue(), namespace);
+      } else if ("serviceName".equals(property.getAttribute(NAME.tagValue()))) {
         property.setAttribute(VALUE.tagValue(), igniteServiceName);
-        break;
       }
     }
   }

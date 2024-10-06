@@ -37,7 +37,11 @@ public class IgniteConfigMapResource extends CRUDKubernetesDependentResource<Con
     protected ConfigMap desired(IgniteResource primary, Context<IgniteResource> context) {
         String updatedConfigData;
         try {
-          updatedConfigData = updateConfigMapXmlData(configData, primary.getSpec().getIgniteConfigMapSpec(), primary.getSpec().getPersistenceSpec(), primary.getMetadata().getName() + "-" + IgniteServiceResource.COMPONENT);
+          updatedConfigData = updateConfigMapXmlData(configData,
+                  primary.getSpec().getIgniteConfigMapSpec(),
+                  primary.getSpec().getPersistenceSpec(),
+                  primary.getMetadata().getName() + "-" + IgniteServiceResource.COMPONENT,
+                  primary.getMetadata().getNamespace());
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
