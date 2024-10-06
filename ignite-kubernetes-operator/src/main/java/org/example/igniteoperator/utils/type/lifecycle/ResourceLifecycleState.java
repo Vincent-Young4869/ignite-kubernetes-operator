@@ -17,7 +17,9 @@ public enum ResourceLifecycleState {
     RECOVERING(false,
             "The ignite cluster is self-healing due to one or more ignite node crushes (e.g. due to OOM, network interrupted)"),
     FAILED(true,
-            "The ignite cluster fails the deployment, typically no running pods");
+            "The ignite cluster fails the deployment, typically no running pods"),
+    TERMINATING(true,
+                   "The ignite cluster is terminating.");
     
     @JsonIgnore @Getter
     private final boolean terminal;

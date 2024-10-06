@@ -1,5 +1,6 @@
 package org.example.igniteoperator.reconciler;
 
+import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.apps.StatefulSet;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.api.reconciler.Cleaner;
@@ -18,6 +19,7 @@ import org.example.igniteoperator.utils.Constants;
 import org.example.igniteoperator.utils.type.lifecycle.ResourceLifecycleState;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -87,6 +89,17 @@ public class IgniteOperatorReconciler implements Reconciler<IgniteResource>, Cle
 
   @Override
   public DeleteControl cleanup(IgniteResource igniteResource, Context<IgniteResource> context) {
-    return DeleteControl.defaultDelete();
+    KubernetesClient client = context.getClient();
+    List<Pod> pods = client.pods().inNamespace(igniteResource.getMetadata().getNamespace())
+            .withLabel("name", igniteResource.getMetadata().getName())
+            .list()
+            .getItems();
+    if (!pods.isEmpty()) {
+      IgniteResource latestResource = client.resource(igniteResource).get();
+      latestResource.getStatus().updateLifecycleState(ResourceLifecycleState.TERMINATING);
+      client.resource(latestResource).updateStatus();
+    }
+      
+      return DeleteControl.defaultDelete();
   }
 }

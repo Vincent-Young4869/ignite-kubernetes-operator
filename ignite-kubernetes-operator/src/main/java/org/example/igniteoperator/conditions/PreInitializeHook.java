@@ -33,7 +33,9 @@ public class PreInitializeHook implements Condition<IgniteSaResource, IgniteReso
         }
         
         assert Objects.nonNull(igniteResource.getStatus());
-        if (isRunningIgniteClusterUnhealthy(igniteResource, client)) {
+        if (igniteResource.getStatus().getResourceLifecycleState().equals(ResourceLifecycleState.TERMINATING)) {
+            return false;
+        } else if (isRunningIgniteClusterUnhealthy(igniteResource, client)) {
             igniteResource.getStatus().updateLifecycleState(ResourceLifecycleState.RECOVERING);
         } else {
             igniteResource.getStatus().updateLifecycleState(ResourceLifecycleState.DEPLOYING);
