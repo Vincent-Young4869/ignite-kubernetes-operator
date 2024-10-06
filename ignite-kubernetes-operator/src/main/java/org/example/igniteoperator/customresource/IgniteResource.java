@@ -12,11 +12,11 @@ import static org.example.igniteoperator.utils.TimeUtils.currentTimestamp;
 @Version("v1")
 public class IgniteResource extends CustomResource<IgniteSpec, IgniteStatus> implements Namespaced {
     
-    @Override
-    protected IgniteStatus initStatus() {
-        return IgniteStatus.builder()
-                .resourceLifecycleState(ResourceLifecycleState.CREATED)
-                .lastLifecycleStateTimestamp(currentTimestamp())
-                .build();
-    }
+    // @Override
+    // protected IgniteStatus initStatus() {
+    //     return IgniteStatus.builder()
+    //             .resourceLifecycleState(ResourceLifecycleState.CREATED)
+    //             .lastLifecycleStateTimestamp(currentTimestamp())
+    //             .build();
+    // }
 }

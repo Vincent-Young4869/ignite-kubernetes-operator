@@ -14,8 +14,10 @@ public enum ResourceLifecycleState {
             "The ignite cluster is considered to be stable but is inactive (extra trigger is needed to activate cluster, this happens when cluster enables persistence)"),
     ACTIVE_RUNNING(true,
             "The ignite cluster is considered to be stable and is activated"),
+    UPGRADING(false,
+            "The ignite cluster is being upgraded. This is typically triggered by user."),
     RECOVERING(false,
-            "The ignite cluster is self-healing dur to one or more ignite node crushes (e.g. due to OOM, network interrupted)"),
+            "The ignite cluster is self-healing due to one or more ignite node crushes (e.g. due to OOM, network interrupted)"),
     FAILED(true,
             "The ignite cluster fails the deployment, typically no running pods");
     
