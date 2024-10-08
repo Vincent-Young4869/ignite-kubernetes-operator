@@ -7,6 +7,7 @@ import io.javaoperatorsdk.operator.api.reconciler.*;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.Dependent;
 import lombok.extern.slf4j.Slf4j;
 import org.example.igniteoperator.conditions.InitializeHook;
+import org.example.igniteoperator.conditions.PostDeleteCondition;
 import org.example.igniteoperator.conditions.PreInitializeHook;
 import org.example.igniteoperator.customresource.IgniteResource;
 import org.example.igniteoperator.dependentresource.*;
@@ -37,6 +38,7 @@ import static org.example.igniteoperator.utils.TimeUtils.isReconcileDurationExce
                 @Dependent(name = IgniteServiceResource.COMPONENT, type = IgniteServiceResource.class,
                         dependsOn = {IgniteRoleResource.COMPONENT}),
                 @Dependent(name = IgniteStatefulSetResource.COMPONENT, type = IgniteStatefulSetResource.class,
+                        deletePostcondition = PostDeleteCondition.class,
                         dependsOn = {IgniteRoleBindingResource.COMPONENT, IgniteServiceResource.COMPONENT, IgniteConfigMapResource.COMPONENT})
         }
 )
@@ -88,16 +90,16 @@ public class IgniteOperatorReconciler implements Reconciler<IgniteResource>, Cle
     
     @Override
     public DeleteControl cleanup(IgniteResource resource, Context<IgniteResource> context) {
-        KubernetesClient client = context.getClient();
-        List<Pod> pods = client.pods().inNamespace(resource.getMetadata().getNamespace())
-                .withLabel("name", resource.getMetadata().getName())
-                .list()
-                .getItems();
-        if (!pods.isEmpty()) {
-            IgniteResource latestResource = client.resource(resource).get();
-            latestResource.getStatus().updateLifecycleState(ResourceLifecycleState.TERMINATING);
-            client.resource(latestResource).updateStatus();
-        }
+        // KubernetesClient client = context.getClient();
+        // List<Pod> pods = client.pods().inNamespace(resource.getMetadata().getNamespace())
+        //         .withLabel("name", resource.getMetadata().getName())
+        //         .list()
+        //         .getItems();
+        // if (!pods.isEmpty()) {
+        //     IgniteResource latestResource = client.resource(resource).get();
+        //     latestResource.getStatus().updateLifecycleState(ResourceLifecycleState.TERMINATING);
+        //     client.resource(latestResource).updateStatus();
+        // }
         
         return DeleteControl.defaultDelete();
     }
