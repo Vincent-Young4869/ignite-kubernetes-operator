@@ -3,12 +3,7 @@ package org.example.igniteoperator.reconciler;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.apps.StatefulSet;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.javaoperatorsdk.operator.api.reconciler.Cleaner;
-import io.javaoperatorsdk.operator.api.reconciler.Context;
-import io.javaoperatorsdk.operator.api.reconciler.ControllerConfiguration;
-import io.javaoperatorsdk.operator.api.reconciler.DeleteControl;
-import io.javaoperatorsdk.operator.api.reconciler.Reconciler;
-import io.javaoperatorsdk.operator.api.reconciler.UpdateControl;
+import io.javaoperatorsdk.operator.api.reconciler.*;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.Dependent;
 import lombok.extern.slf4j.Slf4j;
 import org.example.igniteoperator.conditions.InitializeHook;
@@ -46,60 +41,72 @@ import static org.example.igniteoperator.utils.TimeUtils.isReconcileDurationExce
         }
 )
 @Component
-public class IgniteOperatorReconciler implements Reconciler<IgniteResource>, Cleaner<IgniteResource> {
-  public static final String SELECTOR = "managed";
-
-  @Override
-  public UpdateControl<IgniteResource> reconcile(IgniteResource resource, Context<IgniteResource> context) throws Exception {
-    ResourceLifecycleState nextLifecycleState = getNextLifecycleState(resource, context);
-    resource.getStatus().updateLifecycleState(nextLifecycleState);
-    if (!nextLifecycleState.isTerminal()) {
-      return UpdateControl.patchStatus(resource).rescheduleAfter(30, TimeUnit.SECONDS);
-    }
-    return UpdateControl.patchStatus(resource);
-  }
-  
-  private ResourceLifecycleState getNextLifecycleState(IgniteResource igniteResource, Context<IgniteResource> context) {
-    KubernetesClient client = context.getClient();
+public class IgniteOperatorReconciler implements Reconciler<IgniteResource>, Cleaner<IgniteResource>, ErrorStatusHandler<IgniteResource> {
+    public static final String SELECTOR = "managed";
     
-    String statefulSetName = buildDependentResourceName(igniteResource, IgniteStatefulSetResource.COMPONENT);
-    String namespace = igniteResource.getMetadata().getNamespace();
-    StatefulSet statefulSet = client.apps().statefulSets()
-            .inNamespace(namespace)
-            .withName(statefulSetName)
-            .get();
-    if (Objects.isNull(statefulSet)) {
-      return ResourceLifecycleState.DEPLOYING;
+    @Override
+    public UpdateControl<IgniteResource> reconcile(IgniteResource resource, Context<IgniteResource> context) throws Exception {
+        ResourceLifecycleState nextLifecycleState = getNextLifecycleState(resource, context);
+        resource.getStatus().updateLifecycleState(nextLifecycleState);
+        if (nextLifecycleState.equals(ResourceLifecycleState.FAILED)) {
+            resource.getStatus().setErrorMessage("the cluster fails to be created due to insufficient number of pods, " +
+                    "please inspect pod events or logs for troubleshooting.");
+        }
+        if (!nextLifecycleState.isTerminal()) {
+            return UpdateControl.patchStatus(resource).rescheduleAfter(30, TimeUnit.SECONDS);
+        }
+        return UpdateControl.patchStatus(resource);
     }
     
-    boolean isIgniteClusterReady = Objects.equals(statefulSet.getStatus().getReadyReplicas(), statefulSet.getSpec().getReplicas());
-    if (isIgniteClusterReady) {
-      return igniteResource.getSpec().getPersistenceSpec().isPersistenceEnabled()
-              ? ResourceLifecycleState.INACTIVE_RUNNING
-              : ResourceLifecycleState.ACTIVE_RUNNING;
+    private ResourceLifecycleState getNextLifecycleState(IgniteResource igniteResource, Context<IgniteResource> context) {
+        KubernetesClient client = context.getClient();
+        
+        String statefulSetName = buildDependentResourceName(igniteResource, IgniteStatefulSetResource.COMPONENT);
+        String namespace = igniteResource.getMetadata().getNamespace();
+        StatefulSet statefulSet = client.apps().statefulSets()
+                .inNamespace(namespace)
+                .withName(statefulSetName)
+                .get();
+        if (Objects.isNull(statefulSet)) {
+            return ResourceLifecycleState.DEPLOYING;
+        }
+        
+        boolean isIgniteClusterReady = Objects.equals(statefulSet.getStatus().getReadyReplicas(), statefulSet.getSpec().getReplicas());
+        if (isIgniteClusterReady) {
+            return igniteResource.getSpec().getPersistenceSpec().isPersistenceEnabled()
+                    ? ResourceLifecycleState.INACTIVE_RUNNING
+                    : ResourceLifecycleState.ACTIVE_RUNNING;
+        }
+        
+        String lastReconciledTimestamp = igniteResource.getStatus().getLastLifecycleStateTimestamp();
+        if (isReconcileDurationExceeded(lastReconciledTimestamp, Constants.RECONCILE_MAX_RETRY_DURATION)) {
+            return ResourceLifecycleState.FAILED;
+        }
+        
+        return ResourceLifecycleState.DEPLOYING;
     }
     
-    String lastReconciledTimestamp = igniteResource.getStatus().getLastLifecycleStateTimestamp();
-    if (isReconcileDurationExceeded(lastReconciledTimestamp, Constants.RECONCILE_MAX_RETRY_DURATION)) {
-      return ResourceLifecycleState.FAILED;
+    @Override
+    public DeleteControl cleanup(IgniteResource resource, Context<IgniteResource> context) {
+        KubernetesClient client = context.getClient();
+        List<Pod> pods = client.pods().inNamespace(resource.getMetadata().getNamespace())
+                .withLabel("name", resource.getMetadata().getName())
+                .list()
+                .getItems();
+        if (!pods.isEmpty()) {
+            IgniteResource latestResource = client.resource(resource).get();
+            latestResource.getStatus().updateLifecycleState(ResourceLifecycleState.TERMINATING);
+            client.resource(latestResource).updateStatus();
+        }
+        
+        return DeleteControl.defaultDelete();
     }
     
-    return ResourceLifecycleState.DEPLOYING;
-  }
-
-  @Override
-  public DeleteControl cleanup(IgniteResource igniteResource, Context<IgniteResource> context) {
-    KubernetesClient client = context.getClient();
-    List<Pod> pods = client.pods().inNamespace(igniteResource.getMetadata().getNamespace())
-            .withLabel("name", igniteResource.getMetadata().getName())
-            .list()
-            .getItems();
-    if (!pods.isEmpty()) {
-      IgniteResource latestResource = client.resource(igniteResource).get();
-      latestResource.getStatus().updateLifecycleState(ResourceLifecycleState.TERMINATING);
-      client.resource(latestResource).updateStatus();
+    @Override
+    public ErrorStatusUpdateControl<IgniteResource> updateErrorStatus(IgniteResource resource, Context<IgniteResource> context, Exception e) {
+        resource.getStatus().updateLifecycleState(ResourceLifecycleState.FAILED);
+        resource.getStatus().setErrorMessage("Exception occurs during reconciliation, please contact ignite operator developer.");
+        log.error("Exception occurs during reconciliation: {}", e.getMessage());
+        return ErrorStatusUpdateControl.patchStatus(resource).withNoRetry();
     }
-      
-      return DeleteControl.defaultDelete();
-  }
 }
