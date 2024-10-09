@@ -8,6 +8,10 @@ dependencies {
 
     // https://mvnrepository.com/artifact/io.javaoperatorsdk/operator-framework-spring-boot-starter
     implementation 'io.javaoperatorsdk:operator-framework-spring-boot-starter:5.5.0'
+    // https://mvnrepository.com/artifact/org.springframework.retry/spring-retry
+    implementation 'org.springframework.retry:spring-retry:2.0.9'
+    // https://mvnrepository.com/artifact/org.springframework/spring-aspects
+    implementation 'org.springframework:spring-aspects:6.1.13'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

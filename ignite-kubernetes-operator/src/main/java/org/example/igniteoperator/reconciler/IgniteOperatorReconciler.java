@@ -54,13 +54,19 @@ public class IgniteOperatorReconciler implements Reconciler<IgniteResource>, Cle
             resource.getStatus().setErrorMessage("the cluster fails to be created due to insufficient number of pods, " +
                     "please inspect pod events or logs for troubleshooting.");
         }
+        log.info("{}...", nextLifecycleState);
         if (!nextLifecycleState.isTerminal()) {
-            return UpdateControl.patchStatus(resource).rescheduleAfter(30, TimeUnit.SECONDS);
+            return UpdateControl.patchStatus(resource).rescheduleAfter(10, TimeUnit.SECONDS);
         }
         return UpdateControl.patchStatus(resource);
     }
     
     private ResourceLifecycleState getNextLifecycleState(IgniteResource igniteResource, Context<IgniteResource> context) {
+        ResourceLifecycleState currentLifecycleState = igniteResource.getStatus().getResourceLifecycleState();
+        if (currentLifecycleState.equals(ResourceLifecycleState.TERMINATING)) {
+            return ResourceLifecycleState.TERMINATING;
+        }
+        
         KubernetesClient client = context.getClient();
         
         String statefulSetName = buildDependentResourceName(igniteResource, IgniteStatefulSetResource.COMPONENT);
@@ -83,6 +89,8 @@ public class IgniteOperatorReconciler implements Reconciler<IgniteResource>, Cle
         String lastReconciledTimestamp = igniteResource.getStatus().getLastLifecycleStateTimestamp();
         if (isReconcileDurationExceeded(lastReconciledTimestamp, Constants.RECONCILE_MAX_RETRY_DURATION)) {
             return ResourceLifecycleState.FAILED;
+        } else if (currentLifecycleState.equals(ResourceLifecycleState.RECOVERING)) {
+            return ResourceLifecycleState.RECOVERING;
         }
         
         return ResourceLifecycleState.DEPLOYING;
