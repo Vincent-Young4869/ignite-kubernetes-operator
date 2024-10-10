@@ -61,7 +61,6 @@ public class IgniteOperatorReconciler implements
             resource.getStatus().setErrorMessage("the cluster fails to be created due to insufficient number of pods, " +
                     "please inspect pod events or logs for troubleshooting.");
         }
-        log.info("{}...", nextLifecycleState);
         if (!nextLifecycleState.isTerminal()) {
             return UpdateControl.patchStatus(resource).rescheduleAfter(10, TimeUnit.SECONDS);
         }
