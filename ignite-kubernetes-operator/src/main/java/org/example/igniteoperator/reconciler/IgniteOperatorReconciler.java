@@ -3,8 +3,14 @@ package org.example.igniteoperator.reconciler;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.apps.StatefulSet;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.javaoperatorsdk.operator.api.config.informer.InformerConfiguration;
 import io.javaoperatorsdk.operator.api.reconciler.*;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.Dependent;
+import io.javaoperatorsdk.operator.processing.event.ResourceID;
+import io.javaoperatorsdk.operator.processing.event.source.EventSource;
+import io.javaoperatorsdk.operator.processing.event.source.PrimaryToSecondaryMapper;
+import io.javaoperatorsdk.operator.processing.event.source.SecondaryToPrimaryMapper;
+import io.javaoperatorsdk.operator.processing.event.source.informer.InformerEventSource;
 import lombok.extern.slf4j.Slf4j;
 import org.example.igniteoperator.conditions.InitializeHook;
 import org.example.igniteoperator.conditions.PostDeleteCondition;
@@ -15,9 +21,9 @@ import org.example.igniteoperator.utils.Constants;
 import org.example.igniteoperator.utils.type.lifecycle.ResourceLifecycleState;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.example.igniteoperator.utils.DependentResourceUtils.buildDependentResourceName;
 import static org.example.igniteoperator.utils.TimeUtils.isReconcileDurationExceeded;
@@ -43,7 +49,8 @@ import static org.example.igniteoperator.utils.TimeUtils.isReconcileDurationExce
         }
 )
 @Component
-public class IgniteOperatorReconciler implements Reconciler<IgniteResource>, Cleaner<IgniteResource>, ErrorStatusHandler<IgniteResource> {
+public class IgniteOperatorReconciler implements
+        Reconciler<IgniteResource>, Cleaner<IgniteResource>, ErrorStatusHandler<IgniteResource>, EventSourceInitializer<IgniteResource> {
     public static final String SELECTOR = "managed";
     
     @Override
@@ -98,17 +105,6 @@ public class IgniteOperatorReconciler implements Reconciler<IgniteResource>, Cle
     
     @Override
     public DeleteControl cleanup(IgniteResource resource, Context<IgniteResource> context) {
-        // KubernetesClient client = context.getClient();
-        // List<Pod> pods = client.pods().inNamespace(resource.getMetadata().getNamespace())
-        //         .withLabel("name", resource.getMetadata().getName())
-        //         .list()
-        //         .getItems();
-        // if (!pods.isEmpty()) {
-        //     IgniteResource latestResource = client.resource(resource).get();
-        //     latestResource.getStatus().updateLifecycleState(ResourceLifecycleState.TERMINATING);
-        //     client.resource(latestResource).updateStatus();
-        // }
-        
         return DeleteControl.defaultDelete();
     }
     
@@ -118,5 +114,31 @@ public class IgniteOperatorReconciler implements Reconciler<IgniteResource>, Cle
         resource.getStatus().setErrorMessage("Exception occurs during reconciliation, please contact ignite operator developer.");
         log.error("Exception occurs during reconciliation: {}", e.getMessage());
         return ErrorStatusUpdateControl.patchStatus(resource).withNoRetry();
+    }
+    
+    @Override
+    public Map<String, EventSource> prepareEventSources(EventSourceContext<IgniteResource> eventSourceContext) {
+        final SecondaryToPrimaryMapper<Pod> webappsMatchingTomcatName =
+                (Pod p) -> eventSourceContext.getPrimaryCache()
+                        .list(igniteResource -> String.format("%s-%s-", igniteResource.getMetadata().getName(), IgniteStatefulSetResource.COMPONENT).equals(p.getMetadata().getGenerateName()))
+                        .map(ResourceID::fromResource)
+                        .collect(Collectors.toSet());
+        
+        final PrimaryToSecondaryMapper<IgniteResource> igniteResourceToPods = (IgniteResource primary) -> {
+            Set<ResourceID> podResources = new HashSet<>();
+            eventSourceContext.getClient().pods().inNamespace(primary.getMetadata().getNamespace())
+                    .withLabel("name", primary.getMetadata().getName())
+                    .list().getItems()
+                    .forEach(pod -> podResources.add(ResourceID.fromResource(pod)));
+            return podResources;
+        };
+        
+        InformerConfiguration<Pod> configuration =
+                InformerConfiguration.from(Pod.class, eventSourceContext)
+                        .withSecondaryToPrimaryMapper(webappsMatchingTomcatName)
+                        .withPrimaryToSecondaryMapper(igniteResourceToPods)
+                        .build();
+        return EventSourceInitializer
+                .nameEventSources(new InformerEventSource<>(configuration, eventSourceContext));
     }
 }
