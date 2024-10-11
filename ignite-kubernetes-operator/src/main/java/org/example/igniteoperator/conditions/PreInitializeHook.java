@@ -33,12 +33,24 @@ public class PreInitializeHook implements Condition<IgniteSaResource, IgniteReso
         }
         
         assert Objects.nonNull(igniteResource.getStatus());
-        if (igniteResource.getStatus().getResourceLifecycleState().equals(ResourceLifecycleState.TERMINATING)) {
-            return false;
-        } else if (isRunningIgniteClusterUnhealthy(igniteResource, client)) {
-            igniteResource.getStatus().updateLifecycleState(ResourceLifecycleState.RECOVERING);
-        } else {
-            igniteResource.getStatus().updateLifecycleState(ResourceLifecycleState.DEPLOYING);
+        switch (igniteResource.getStatus().getResourceLifecycleState()) {
+            // TODO: FAILED -> DEPLOYING is currently not supported
+            //  due to the current k8s design that statefulset won't clean up crushed pods and recreate new ones
+            //  after investigation, there is a pending PR that can potentially solve this issue
+            //  link to the ticket: https://github.com/kubernetes/enhancements/issues/3541, https://github.com/kubernetes/kubernetes/issues/120123
+            case TERMINATING, FAILED:
+                return false;
+            case INACTIVE_RUNNING, ACTIVE_RUNNING:
+                if (isRunningIgniteClusterHealthy(igniteResource, client)) {
+                    return true;
+                }
+                igniteResource.getStatus().updateLifecycleState(ResourceLifecycleState.RECOVERING);
+                break;
+            case CREATED, DEPLOYING, RECOVERING:
+                return true;
+            case INITIALIZING:
+                igniteResource.getStatus().updateLifecycleState(ResourceLifecycleState.DEPLOYING);
+                break;
         }
         
         client.resource(igniteResource).updateStatus();
@@ -63,14 +75,13 @@ public class PreInitializeHook implements Condition<IgniteSaResource, IgniteReso
         igniteResource.setStatus(status);
     }
     
-    private boolean isRunningIgniteClusterUnhealthy(IgniteResource igniteResource, KubernetesClient client) {
+    private boolean isRunningIgniteClusterHealthy(IgniteResource igniteResource, KubernetesClient client) {
         String statefulSetName = buildDependentResourceName(igniteResource, IgniteStatefulSetResource.COMPONENT);
         String namespace = igniteResource.getMetadata().getNamespace();
         StatefulSet statefulSet = client.apps().statefulSets()
                 .inNamespace(namespace)
                 .withName(statefulSetName)
                 .get();
-        return !Objects.equals(statefulSet.getStatus().getReadyReplicas(), statefulSet.getSpec().getReplicas())
-                && igniteResource.getStatus().getResourceLifecycleState().equals(ResourceLifecycleState.ACTIVE_RUNNING);
+        return Objects.equals(statefulSet.getStatus().getReadyReplicas(), statefulSet.getSpec().getReplicas());
     }
 }

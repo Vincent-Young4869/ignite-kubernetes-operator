@@ -11,6 +11,7 @@ import io.fabric8.kubernetes.api.model.apps.StatefulSetSpec;
 import io.fabric8.kubernetes.api.model.apps.StatefulSetSpecBuilder;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
+import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDNoGCKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
 
 import java.util.ArrayList;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.util.StringUtils;
 
 @KubernetesDependent( resourceDiscriminator = IgniteStatefulSetResource.Discriminator.class)
-public class IgniteStatefulSetResource extends CRUDKubernetesDependentResource<StatefulSet, IgniteResource> {
+public class IgniteStatefulSetResource extends CRUDNoGCKubernetesDependentResource<StatefulSet, IgniteResource> {
   public static final String COMPONENT = "ignite-cluster";
   private static final String RESOURCE_TEMPLATE_PATH = "templates/ignite-cluster-statefulset.yaml";
   private StatefulSet template;

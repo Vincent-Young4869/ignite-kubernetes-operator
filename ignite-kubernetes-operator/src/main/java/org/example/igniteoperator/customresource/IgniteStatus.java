@@ -20,9 +20,11 @@ public class IgniteStatus extends ObservedGenerationAwareStatus {
     private String lastLifecycleStateTimestamp;
     @Builder.Default
     private List<ResourceLifecycleState> historyStates = new ArrayList<>(List.of(ResourceLifecycleState.CREATED));
+    private String errorMessage;
     
-    public void updateLifecycleState(ResourceLifecycleState nextState) {
+    public synchronized void updateLifecycleState(ResourceLifecycleState nextState) {
         if (!nextState.equals(resourceLifecycleState)) {
+            log.info("{} -> {}", this.resourceLifecycleState, nextState);
             lastLifecycleStateTimestamp = currentTimestamp();
             resourceLifecycleState = nextState;
             historyStates.add(0, nextState);
