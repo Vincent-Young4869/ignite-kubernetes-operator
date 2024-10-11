@@ -115,16 +115,28 @@ public class IgniteOperatorReconciler implements
         return ErrorStatusUpdateControl.patchStatus(resource).withNoRetry();
     }
     
+    /**
+     * Register event source for pods within the ignite cluster, any change on pods (ignite nodes) will trigger a reconciliation
+     * Note that event source is trivial (won't trigger reconciliation) when primary resource is under FAILED status
+     * @param eventSourceContext
+     * @return
+     */
     @Override
     public Map<String, EventSource> prepareEventSources(EventSourceContext<IgniteResource> eventSourceContext) {
         final SecondaryToPrimaryMapper<Pod> webappsMatchingTomcatName =
                 (Pod p) -> eventSourceContext.getPrimaryCache()
-                        .list(igniteResource -> String.format("%s-%s-", igniteResource.getMetadata().getName(), IgniteStatefulSetResource.COMPONENT).equals(p.getMetadata().getGenerateName()))
+                        .list(igniteResource ->
+                                String.format("%s-%s-", igniteResource.getMetadata().getName(), IgniteStatefulSetResource.COMPONENT)
+                                        .equals(p.getMetadata().getGenerateName())
+                                        && !igniteResource.getStatus().getResourceLifecycleState().equals(ResourceLifecycleState.FAILED))
                         .map(ResourceID::fromResource)
                         .collect(Collectors.toSet());
         
         final PrimaryToSecondaryMapper<IgniteResource> igniteResourceToPods = (IgniteResource primary) -> {
             Set<ResourceID> podResources = new HashSet<>();
+            if (primary.getStatus().getResourceLifecycleState().equals(ResourceLifecycleState.FAILED)) {
+                return podResources;
+            }
             eventSourceContext.getClient().pods().inNamespace(primary.getMetadata().getNamespace())
                     .withLabel("name", primary.getMetadata().getName())
                     .list().getItems()

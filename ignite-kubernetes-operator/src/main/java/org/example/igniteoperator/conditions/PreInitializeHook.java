@@ -34,7 +34,11 @@ public class PreInitializeHook implements Condition<IgniteSaResource, IgniteReso
         
         assert Objects.nonNull(igniteResource.getStatus());
         switch (igniteResource.getStatus().getResourceLifecycleState()) {
-            case TERMINATING:
+            // TODO: FAILED -> DEPLOYING is currently not supported
+            //  due to the current k8s design that statefulset won't clean up crushed pods and recreate new ones
+            //  after investigation, there is a pending PR that can potentially solve this issue
+            //  link to the ticket: https://github.com/kubernetes/enhancements/issues/3541, https://github.com/kubernetes/kubernetes/issues/120123
+            case TERMINATING, FAILED:
                 return false;
             case INACTIVE_RUNNING, ACTIVE_RUNNING:
                 if (isRunningIgniteClusterHealthy(igniteResource, client)) {
@@ -44,7 +48,7 @@ public class PreInitializeHook implements Condition<IgniteSaResource, IgniteReso
                 break;
             case CREATED, DEPLOYING, RECOVERING:
                 return true;
-            case INITIALIZING, FAILED:
+            case INITIALIZING:
                 igniteResource.getStatus().updateLifecycleState(ResourceLifecycleState.DEPLOYING);
                 break;
         }
