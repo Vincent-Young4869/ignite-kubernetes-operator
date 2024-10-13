@@ -22,9 +22,14 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import org.example.igniteoperator.customresource.IgniteResource;
 import org.example.igniteoperator.customresource.IgniteSpec;
+import org.example.igniteoperator.utils.models.*;
+import org.example.igniteoperator.utils.type.K8sServiceType;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
- * client code for ../basic.yaml.
+ * example of creating an ignite cluster using k8s api (with operator running)
  */
 public class Basic {
     public static void main(String[] args) {
@@ -34,16 +39,60 @@ public class Basic {
                 .withName("test")
                 .build());
         IgniteSpec spec = new IgniteSpec();
-        spec.setIgniteImage("gridgain/community");
-        spec.setIgniteVersion("8.8.42-openjdk17");
-        spec.setIgniteOptionalLibs("ignite-kubernetes,ignite-rest-http");
-        spec.setJvmOpts("-DIGNITE_WAL_MMAP=false -DIGNITE_WAIT_FOR_BACKUPS_ON_SHUTDOWN=true "
-                + "-server -Xms1G -Xmx1G -XX:+AlwaysPreTouch -XX:+UseG1GC -XX:+ScavengeBeforeFullGC "
-                + "-XX:+DisableExplicitGC -XX:MetaspaceSize=200M -XX:MinMetaspaceFreeRatio=40 "
-                + "-XX:MaxMetaspaceFreeRatio=60");
+        spec.setReplicas(1);
         
+        spec.setIgniteNodeSpec(createNodeSpec());
+        spec.setK8sServiceSpec(createK8sServiceSpec());
+        spec.setPersistenceSpec(createPersistenceSpec());
+        spec.setIgniteConfigMapSpec(createIgniteConfigMapSpec());
+        
+        igniteResource.setSpec(spec);
         try (KubernetesClient kubernetesClient = new KubernetesClientBuilder().build()) {
             kubernetesClient.resource(igniteResource).createOrReplace();
         }
+    }
+    
+    @NotNull
+    private static IgniteNodeSpec createNodeSpec() {
+        IgniteNodeSpec igniteNodeSpec = new IgniteNodeSpec();
+        igniteNodeSpec.setIgniteImage("gridgain/community");
+        igniteNodeSpec.setIgniteVersion("8.8.42-openjdk17");
+        igniteNodeSpec.setIgniteOptionalLibs("ignite-kubernetes,ignite-rest-http");
+        igniteNodeSpec.setJvmOpts("-DIGNITE_WAL_MMAP=false -DIGNITE_WAIT_FOR_BACKUPS_ON_SHUTDOWN=true "
+                + "-server -Xms1G -Xmx1G -XX:+AlwaysPreTouch -XX:+UseG1GC -XX:+ScavengeBeforeFullGC "
+                + "-XX:+DisableExplicitGC -XX:MetaspaceSize=200M -XX:MinMetaspaceFreeRatio=40 "
+                + "-XX:MaxMetaspaceFreeRatio=60");
+        igniteNodeSpec.setIgniteNodeCpu("1");
+        igniteNodeSpec.setIgniteNodeMemory("3Gi");
+        return igniteNodeSpec;
+    }
+    
+    @NotNull
+    private static K8sServiceSpec createK8sServiceSpec() {
+        K8sServiceSpec k8sServiceSpec = new K8sServiceSpec();
+        k8sServiceSpec.setType(K8sServiceType.ClusterIP);
+        return k8sServiceSpec;
+    }
+    
+    @NotNull
+    private static PersistenceSpec createPersistenceSpec() {
+        PersistenceSpec persistenceSpec = new PersistenceSpec();
+        persistenceSpec.setPersistenceEnabled(true);
+        persistenceSpec.setDataVolumeSpec(
+                VolumeSpec.builder()
+                        .name("data-vol")
+                        .accessModes(List.of("ReadWriteOnce"))
+                        .mountPath("/opt/gridgain/work")
+                        .storage("2Gi")
+                        .build());
+        return persistenceSpec;
+    }
+    
+    @NotNull
+    private static IgniteConfigMapSpec createIgniteConfigMapSpec() {
+        IgniteConfigMapSpec configMapSpec = new IgniteConfigMapSpec();
+        configMapSpec.setDefaultDataRegionSize("110 * 1024 * 1024");
+        configMapSpec.setRelationalDataRegionSize("120 * 1024 * 1024");
+        return configMapSpec;
     }
 }

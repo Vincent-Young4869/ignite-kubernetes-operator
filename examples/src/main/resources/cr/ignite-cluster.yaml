@@ -1,0 +1,93 @@
+apiVersion: com.yyc/v1
+kind: IgniteResource
+metadata:
+  namespace: ignite
+  name: test
+
+spec:
+  replicas: 2
+  igniteSaSpec:
+    googleServiceAccount: ""
+  igniteNodeSpec:
+    igniteImage: "gridgain/community"
+    igniteVersion: "8.8.42-openjdk17"
+    igniteOptionalLibs: "ignite-kubernetes,ignite-rest-http"
+    jvmOpts: "-DIGNITE_WAL_MMAP=false -DIGNITE_WAIT_FOR_BACKUPS_ON_SHUTDOWN=true
+                  -server -Xms2G -Xmx2G -XX:+AlwaysPreTouch -XX:+UseG1GC -XX:+ScavengeBeforeFullGC
+                  -XX:+DisableExplicitGC -XX:MetaspaceSize=200M -XX:MinMetaspaceFreeRatio=40
+                  -XX:MaxMetaspaceFreeRatio=60"
+    igniteNodeCpu: "1"
+    igniteNodeMemory: "3Gi"
+  k8sServiceSpec:
+    type: LoadBalancer
+    annotations:
+      my-load-balancer-type: "Internal"
+  persistenceSpec:
+    persistenceEnabled: false
+    dataVolumeSpec:
+      name: "data-vol"
+      mountPath: "/opt/gridgain/work"
+      accessModes: [ "ReadWriteOnce" ]
+      storage: "2Gi"
+  igniteConfigMapSpec:
+    defaultDataRegionSize: "110 * 1024 * 1024"
+    relationalDataRegionSize: "120 * 1024 * 1024"
+#    configXmlOverride: |
+#      <?xml version="1.0" encoding="UTF-8"?>
+#      <beans xmlns="http://www.springframework.org/schema/beans"
+#             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+#             xsi:schemaLocation="
+#              http://www.springframework.org/schema/beans
+#              http://www.springframework.org/schema/beans/spring-beans.xsd">
+#          <!-- Define metrics exporter configs: set up prometheus http server and register stats collector -->
+#
+#          <bean class="org.apache.ignite.configuration.IgniteConfiguration">
+#              <!-- Define opensensus metrics exporter configs -->
+#
+#              <!-- Disable continuous metrics log -->
+#              <!--        <property name="metricsLogFrequency" value="0"/>-->
+#              <property name="metricsUpdateFrequency" value="1000"/>
+#              <!-- Enable peer class loading. -->
+#              <property name="peerClassLoadingEnabled" value="true"/>
+#              <!-- Set deployment mode. -->
+#              <property name="deploymentMode" value="CONTINUOUS"/>
+#              <property name="workDirectory" value="/opt/gridgain/work"/>
+#              <property name="dataStorageConfiguration">
+#                  <bean class="org.apache.ignite.configuration.DataStorageConfiguration">
+#                      <property name="defaultDataRegionConfiguration">
+#                          <bean class="org.apache.ignite.configuration.DataRegionConfiguration">
+#                              <property name="name" value="DEFAULT_REGION"/>
+#                              <property name="persistenceEnabled" value="false"/>
+#                              <property name="metricsEnabled" value="true"/>
+#                              <property name="initialSize" value="#{50 * 1024 * 1024}"/>
+#                              <property name="maxSize" value="#{50 * 1024 * 1024}"/>
+#                          </bean>
+#                      </property>
+#                      <property name="dataRegionConfigurations">
+#                          <list>
+#                              <bean class="org.apache.ignite.configuration.DataRegionConfiguration">
+#                                  <property name="name" value="IMDB_REGION"/>
+#                                  <property name="persistenceEnabled" value="true"/>
+#                                  <property name="metricsEnabled" value="true"/>
+#                                  <property name="initialSize" value="#{128 * 1024 * 1024}"/>
+#                                  <property name="maxSize" value="#{128 * 1024 * 1024}"/>
+#                              </bean>
+#                          </list>
+#                      </property>
+#                      <property name="walPath" value="/opt/gridgain/wal"/>
+#                      <property name="walArchivePath" value="/opt/gridgain/walarchive"/>
+#                  </bean>
+#              </property>
+#              <property name="discoverySpi">
+#                  <bean class="org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi">
+#                      <property name="ipFinder">
+#                          <bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.kubernetes.TcpDiscoveryKubernetesIpFinder">
+#                              <property name="namespace" value="ignite"/>
+#                              <property name="serviceName" value="test-ignite-service"/>
+#                          </bean>
+#                      </property>
+#                  </bean>
+#              </property>
+#
+#          </bean>
+#      </beans>

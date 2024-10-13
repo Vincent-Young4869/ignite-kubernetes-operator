@@ -35,16 +35,11 @@ public class IgniteConfigMapResource extends CRUDKubernetesDependentResource<Con
 
     @Override
     protected ConfigMap desired(IgniteResource primary, Context<IgniteResource> context) {
-        String updatedConfigData;
-        try {
-          updatedConfigData = updateConfigMapXmlData(configData,
+        String updatedConfigData = updateConfigMapXmlData(configData,
                   primary.getSpec().getIgniteConfigMapSpec(),
                   primary.getSpec().getPersistenceSpec(),
                   primary.getMetadata().getName() + "-" + IgniteServiceResource.COMPONENT,
                   primary.getMetadata().getNamespace());
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
         Map<String, String> data = new HashMap<>();
         data.put("node-configuration.xml", updatedConfigData);
         return new ConfigMapBuilder()
