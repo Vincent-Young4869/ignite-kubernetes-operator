@@ -20,11 +20,10 @@ package org.yyc.ignite.operator.example;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientBuilder;
-import org.yyc.ignite.operator.api.spec.*;
-import org.yyc.ignite.operator.api.customresource.IgniteResource;
-import org.yyc.ignite.operator.api.spec.IgniteSpec;
-import org.yyc.ignite.operator.api.type.K8sServiceTypeEnum;
 import org.jetbrains.annotations.NotNull;
+import org.yyc.ignite.operator.api.customresource.IgniteResource;
+import org.yyc.ignite.operator.api.spec.*;
+import org.yyc.ignite.operator.api.type.K8sServiceTypeEnum;
 
 import java.util.List;
 

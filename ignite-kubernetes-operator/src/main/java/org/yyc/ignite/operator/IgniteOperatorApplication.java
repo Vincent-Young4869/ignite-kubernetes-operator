@@ -5,9 +5,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class IgniteOperatorApplication {
-
-  public static void main(String[] args) {
-    SpringApplication.run(IgniteOperatorApplication.class, args);
-  }
-
+    
+    public static void main(String[] args) {
+        SpringApplication.run(IgniteOperatorApplication.class, args);
+    }
+    
 }

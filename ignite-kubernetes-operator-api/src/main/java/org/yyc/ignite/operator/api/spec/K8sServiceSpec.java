@@ -8,7 +8,7 @@ import java.util.Map;
 
 @Data
 public class K8sServiceSpec {
-    private K8sServiceTypeEnum type =  K8sServiceTypeEnum.ClusterIP;
+    private K8sServiceTypeEnum type = K8sServiceTypeEnum.ClusterIP;
     private String ip = "";
     private Map<String, String> annotations = new HashMap<>();
 }

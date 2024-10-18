@@ -8,17 +8,17 @@ import org.yyc.ignite.operator.api.type.K8sMetadataLabelEnum;
 import java.util.List;
 
 public class DependentResourceUtils {
-    public static <T extends CustomResource<?,?>> ObjectMetaBuilder buildMetadataTemplate(T primary, String component) {
-        return  new ObjectMetaBuilder()
+    public static <T extends CustomResource<?, ?>> ObjectMetaBuilder buildMetadataTemplate(T primary, String component) {
+        return new ObjectMetaBuilder()
                 .withNamespace(primary.getMetadata().getNamespace())
-                .withManagedFields((List<ManagedFieldsEntry>)null)
+                .withManagedFields((List<ManagedFieldsEntry>) null)
                 .addToLabels(K8sMetadataLabelEnum.COMPONENT.labelName(), component)
                 .addToLabels(K8sMetadataLabelEnum.NAME.labelName(), primary.getMetadata().getName())
                 .withName(buildDependentResourceName(primary, component))
                 .addToLabels(K8sMetadataLabelEnum.MANAGED_BY.labelName(), Constants.OPERATOR_NAME);
     }
     
-    public static <T extends CustomResource<?,?>> String buildDependentResourceName(T primary, String component) {
+    public static <T extends CustomResource<?, ?>> String buildDependentResourceName(T primary, String component) {
         return primary.getMetadata().getName() + "-" + component;
     }
 }

@@ -5,8 +5,8 @@ import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.DependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
 import org.yyc.ignite.operator.api.customresource.IgniteResource;
-import org.yyc.ignite.operator.dependentresource.IgniteSaResource;
 import org.yyc.ignite.operator.api.type.lifecycle.IgniteClusterLifecycleStateEnum;
+import org.yyc.ignite.operator.dependentresource.IgniteSaResource;
 
 public class InitializeHook implements Condition<IgniteSaResource, IgniteResource> {
     @Override

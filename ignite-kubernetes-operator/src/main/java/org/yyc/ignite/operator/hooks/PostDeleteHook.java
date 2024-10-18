@@ -8,8 +8,8 @@ import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
 import lombok.extern.slf4j.Slf4j;
 import org.yyc.ignite.operator.api.customresource.IgniteResource;
 import org.yyc.ignite.operator.api.type.K8sMetadataLabelEnum;
-import org.yyc.ignite.operator.dependentresource.IgniteStatefulSetResource;
 import org.yyc.ignite.operator.api.type.lifecycle.IgniteClusterLifecycleStateEnum;
+import org.yyc.ignite.operator.dependentresource.IgniteStatefulSetResource;
 
 import java.util.List;
 

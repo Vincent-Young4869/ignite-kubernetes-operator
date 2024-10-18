@@ -19,11 +19,13 @@ public enum IgniteClusterLifecycleStateEnum {
     FAILED(true,
             "The ignite cluster fails the deployment, typically no running pods"),
     TERMINATING(false,
-                   "The ignite cluster is terminating.");
+            "The ignite cluster is terminating.");
     
-    @JsonIgnore @Getter
+    @JsonIgnore
+    @Getter
     private final boolean terminal;
-    @JsonIgnore @Getter
+    @JsonIgnore
+    @Getter
     private final String description;
     
     IgniteClusterLifecycleStateEnum(boolean terminal, String description) {

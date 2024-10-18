@@ -1,29 +1,29 @@
 package org.yyc.ignite.operator.api.utils;
 
-import static org.yyc.ignite.operator.api.type.XmlTagEnum.*;
+import lombok.extern.slf4j.Slf4j;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.yyc.ignite.operator.api.spec.IgniteConfigMapSpec;
+import org.yyc.ignite.operator.api.spec.PersistenceSpec;
 
-import java.io.StringWriter;
-import java.util.Objects;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import java.io.StringWriter;
+import java.util.Objects;
 
-import lombok.extern.slf4j.Slf4j;
-import org.yyc.ignite.operator.api.spec.IgniteConfigMapSpec;
-import org.yyc.ignite.operator.api.spec.PersistenceSpec;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
+import static org.yyc.ignite.operator.api.type.XmlTagEnum.*;
 
 @Slf4j
 public class XmlUpdateUtils {
-    private static final String IGNITE_DATA_REGION_CONFIG = "org.apache.ignite.configuration.DataRegionConfiguration";
-    private static final String IGNITE_K8S_IP_FINDER = "org.apache.ignite.spi.discovery.tcp.ipfinder.kubernetes.TcpDiscoveryKubernetesIpFinder";
     public static final String IGNITE_CONFIGURATION = "org.apache.ignite.configuration.IgniteConfiguration";
     public static final String IGNITE_DATA_STORAGE_CONFIGURATION = "org.apache.ignite.configuration.DataStorageConfiguration";
+    private static final String IGNITE_DATA_REGION_CONFIG = "org.apache.ignite.configuration.DataRegionConfiguration";
+    private static final String IGNITE_K8S_IP_FINDER = "org.apache.ignite.spi.discovery.tcp.ipfinder.kubernetes.TcpDiscoveryKubernetesIpFinder";
     
     // TODO: investigate a better way to manipulate xml file
     public static String updateConfigMapXmlData(Document doc,

@@ -8,9 +8,9 @@ import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
 import lombok.extern.slf4j.Slf4j;
 import org.yyc.ignite.operator.api.customresource.IgniteResource;
 import org.yyc.ignite.operator.api.status.IgniteStatus;
+import org.yyc.ignite.operator.api.type.lifecycle.IgniteClusterLifecycleStateEnum;
 import org.yyc.ignite.operator.dependentresource.IgniteSaResource;
 import org.yyc.ignite.operator.dependentresource.IgniteStatefulSetResource;
-import org.yyc.ignite.operator.api.type.lifecycle.IgniteClusterLifecycleStateEnum;
 
 import java.util.Objects;
 
@@ -20,12 +20,20 @@ import static org.yyc.ignite.operator.api.utils.TimeUtils.currentTimestamp;
 @Slf4j
 public class PreInitializeHook implements Condition<IgniteSaResource, IgniteResource> {
     
+    private static void initIgniteStatus(IgniteResource igniteResource) {
+        IgniteStatus status = IgniteStatus.builder()
+                .igniteClusterLifecycleState(IgniteClusterLifecycleStateEnum.CREATED)
+                .lastLifecycleStateTimestamp(currentTimestamp())
+                .build();
+        igniteResource.setStatus(status);
+    }
+    
     @Override
     public boolean isMet(DependentResource<IgniteSaResource, IgniteResource> dependentResource,
                          IgniteResource igniteResource,
                          Context<IgniteResource> context) {
         KubernetesClient client = context.getClient();
-
+        
         if (isIgniteClusterNotExist(igniteResource, client)) {
             initIgniteStatus(igniteResource);
             client.resource(igniteResource).updateStatus();
@@ -65,14 +73,6 @@ public class PreInitializeHook implements Condition<IgniteSaResource, IgniteReso
                 .withName(statefulSetName)
                 .get();
         return Objects.isNull(statefulSet);
-    }
-    
-    private static void initIgniteStatus(IgniteResource igniteResource) {
-        IgniteStatus status = IgniteStatus.builder()
-                .igniteClusterLifecycleState(IgniteClusterLifecycleStateEnum.CREATED)
-                .lastLifecycleStateTimestamp(currentTimestamp())
-                .build();
-        igniteResource.setStatus(status);
     }
     
     private boolean isRunningIgniteClusterHealthy(IgniteResource igniteResource, KubernetesClient client) {

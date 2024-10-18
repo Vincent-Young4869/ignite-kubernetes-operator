@@ -1,7 +1,10 @@
 package org.yyc.ignite.operator.api.status;
 
 import io.javaoperatorsdk.operator.api.ObservedGenerationAwareStatus;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.yyc.ignite.operator.api.type.lifecycle.IgniteClusterLifecycleStateEnum;
 
