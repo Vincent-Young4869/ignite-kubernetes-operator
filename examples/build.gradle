@@ -3,6 +3,7 @@ plugins {
 
 dependencies {
     implementation project(":ignite-kubernetes-operator")
+    implementation project(":ignite-kubernetes-operator-api")
 
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
     implementation 'org.slf4j:slf4j-api:2.0.13'

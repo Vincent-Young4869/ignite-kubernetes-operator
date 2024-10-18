@@ -5,12 +5,12 @@ import io.fabric8.kubernetes.api.model.rbac.*;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
-import org.yyc.ignite.operator.customresource.IgniteResource;
-import org.yyc.ignite.operator.utils.TemplateLoadUtils;
-import org.yyc.ignite.operator.utils.models.AbstractIgniteResourceDiscriminator;
+import org.yyc.ignite.operator.api.customresource.IgniteResource;
+import org.yyc.ignite.operator.api.utils.TemplateFileLoadUtils;
+import org.yyc.ignite.operator.api.AbstractIgniteResourceDiscriminator;
 
-import static org.yyc.ignite.operator.utils.DependentResourceUtils.buildDependentResourceName;
-import static org.yyc.ignite.operator.utils.DependentResourceUtils.fromPrimary;
+import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.buildDependentResourceName;
+import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.buildMetadataTemplate;
 
 @KubernetesDependent(resourceDiscriminator = IgniteRoleBindingResource.Discriminator.class)
 public class IgniteRoleBindingResource extends CRUDKubernetesDependentResource<RoleBinding, IgniteResource> {
@@ -21,12 +21,12 @@ public class IgniteRoleBindingResource extends CRUDKubernetesDependentResource<R
     private RoleBinding template;
     public IgniteRoleBindingResource() {
         super(RoleBinding.class);
-        this.template = TemplateLoadUtils.loadYamlTemplate(RoleBinding.class, RESOURCE_TEMPLATE_PATH);
+        this.template = TemplateFileLoadUtils.loadYamlTemplate(RoleBinding.class, RESOURCE_TEMPLATE_PATH);
     }
 
     @Override
     protected RoleBinding desired(IgniteResource primary, Context<IgniteResource> context) {
-        ObjectMeta metaData = fromPrimary(primary,COMPONENT).build();
+        ObjectMeta metaData = buildMetadataTemplate(primary,COMPONENT).build();
         
         return new RoleBindingBuilder(template)
                 .withMetadata(metaData)

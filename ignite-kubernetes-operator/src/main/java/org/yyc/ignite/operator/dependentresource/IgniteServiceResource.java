@@ -1,8 +1,8 @@
 package org.yyc.ignite.operator.dependentresource;
 
-import static org.yyc.ignite.operator.utils.DependentResourceUtils.fromPrimary;
-import static org.yyc.ignite.operator.utils.type.K8sServiceType.ClusterIP;
-import static org.yyc.ignite.operator.utils.type.K8sServiceType.LoadBalancer;
+import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.buildMetadataTemplate;
+import static org.yyc.ignite.operator.api.type.K8sServiceTypeEnum.ClusterIP;
+import static org.yyc.ignite.operator.api.type.K8sServiceTypeEnum.LoadBalancer;
 
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Service;
@@ -13,9 +13,10 @@ import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDep
 
 import java.util.HashMap;
 import java.util.Map;
-import org.yyc.ignite.operator.customresource.IgniteResource;
-import org.yyc.ignite.operator.utils.TemplateLoadUtils;
-import org.yyc.ignite.operator.utils.models.AbstractIgniteResourceDiscriminator;
+import org.yyc.ignite.operator.api.customresource.IgniteResource;
+import org.yyc.ignite.operator.api.type.K8sMetadataLabelEnum;
+import org.yyc.ignite.operator.api.utils.TemplateFileLoadUtils;
+import org.yyc.ignite.operator.api.AbstractIgniteResourceDiscriminator;
 
 @KubernetesDependent(resourceDiscriminator = IgniteServiceResource.Discriminator.class)
 public class IgniteServiceResource extends CRUDKubernetesDependentResource<Service, IgniteResource> {
@@ -26,18 +27,18 @@ public class IgniteServiceResource extends CRUDKubernetesDependentResource<Servi
     private Service template;
     public IgniteServiceResource() {
         super(Service.class);
-        this.template = TemplateLoadUtils.loadYamlTemplate(Service.class, RESOURCE_TEMPLATE_PATH);
+        this.template = TemplateFileLoadUtils.loadYamlTemplate(Service.class, RESOURCE_TEMPLATE_PATH);
     }
 
     @Override
     protected Service desired(IgniteResource primary, Context<IgniteResource> context) {
 
-        ObjectMeta meta = fromPrimary(primary,COMPONENT)
+        ObjectMeta meta = buildMetadataTemplate(primary,COMPONENT)
                 .withAnnotations(primary.getSpec().getK8sServiceSpec().getAnnotations())
                 .build();
 
         Map<String, String> selector = new HashMap<>(meta.getLabels());
-        selector.put("component", IgniteStatefulSetResource.COMPONENT);
+        selector.put(K8sMetadataLabelEnum.COMPONENT.labelName(), IgniteStatefulSetResource.COMPONENT);
         
         return switch (primary.getSpec().getK8sServiceSpec().getType()) {
             case ClusterIP -> buildClusterIpService(primary, meta, selector);

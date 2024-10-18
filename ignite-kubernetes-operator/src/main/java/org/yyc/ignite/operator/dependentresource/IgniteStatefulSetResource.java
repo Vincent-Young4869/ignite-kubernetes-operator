@@ -1,8 +1,8 @@
 package org.yyc.ignite.operator.dependentresource;
 
-import static org.yyc.ignite.operator.utils.DependentResourceUtils.buildDependentResourceName;
-import static org.yyc.ignite.operator.utils.DependentResourceUtils.fromPrimary;
-import static org.yyc.ignite.operator.utils.type.IgniteEnvVar.*;
+import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.buildDependentResourceName;
+import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.buildMetadataTemplate;
+import static org.yyc.ignite.operator.api.type.IgniteEnvVarEnum.*;
 
 import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.api.model.apps.StatefulSet;
@@ -19,12 +19,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import org.yyc.ignite.operator.customresource.IgniteResource;
-import org.yyc.ignite.operator.utils.Constants;
-import org.yyc.ignite.operator.utils.TemplateLoadUtils;
-import org.yyc.ignite.operator.utils.models.AbstractIgniteResourceDiscriminator;
-import org.yyc.ignite.operator.utils.models.PersistenceSpec;
-import org.yyc.ignite.operator.utils.models.VolumeSpec;
+import org.yyc.ignite.operator.api.customresource.IgniteResource;
+import org.yyc.ignite.operator.api.utils.Constants;
+import org.yyc.ignite.operator.api.utils.TemplateFileLoadUtils;
+import org.yyc.ignite.operator.api.AbstractIgniteResourceDiscriminator;
+import org.yyc.ignite.operator.api.spec.PersistenceSpec;
+import org.yyc.ignite.operator.api.spec.VolumeSpec;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.util.StringUtils;
 
@@ -36,7 +36,7 @@ public class IgniteStatefulSetResource extends CRUDNoGCKubernetesDependentResour
 
   public IgniteStatefulSetResource() {
     super(StatefulSet.class);
-    this.template = TemplateLoadUtils.loadYamlTemplate(StatefulSet.class, RESOURCE_TEMPLATE_PATH);
+    this.template = TemplateFileLoadUtils.loadYamlTemplate(StatefulSet.class, RESOURCE_TEMPLATE_PATH);
   }
 
   @Override
@@ -44,7 +44,7 @@ public class IgniteStatefulSetResource extends CRUDNoGCKubernetesDependentResour
     Map<String, String> annotations = new HashMap<>();
     annotations.put("ConfigMapMetadata", primary.getSpec().getIgniteConfigMapSpec().toString());
     annotations.put("podConfig", primary.getSpec().getIgniteNodeSpec().toString());
-    ObjectMeta meta = fromPrimary(primary,COMPONENT)
+    ObjectMeta meta = buildMetadataTemplate(primary,COMPONENT)
             .withAnnotations(annotations)
             .build();
 

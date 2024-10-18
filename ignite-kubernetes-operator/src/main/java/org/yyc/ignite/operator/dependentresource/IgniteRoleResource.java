@@ -6,11 +6,11 @@ import io.fabric8.kubernetes.api.model.rbac.RoleBuilder;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
-import org.yyc.ignite.operator.customresource.IgniteResource;
-import org.yyc.ignite.operator.utils.TemplateLoadUtils;
-import org.yyc.ignite.operator.utils.models.AbstractIgniteResourceDiscriminator;
+import org.yyc.ignite.operator.api.customresource.IgniteResource;
+import org.yyc.ignite.operator.api.utils.TemplateFileLoadUtils;
+import org.yyc.ignite.operator.api.AbstractIgniteResourceDiscriminator;
 
-import static org.yyc.ignite.operator.utils.DependentResourceUtils.fromPrimary;
+import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.buildMetadataTemplate;
 
 @KubernetesDependent(resourceDiscriminator = IgniteRoleResource.Discriminator.class)
 public class IgniteRoleResource extends CRUDKubernetesDependentResource<Role, IgniteResource> {
@@ -21,12 +21,12 @@ public class IgniteRoleResource extends CRUDKubernetesDependentResource<Role, Ig
     private Role template;
     public IgniteRoleResource() {
         super(Role.class);
-        this.template = TemplateLoadUtils.loadYamlTemplate(Role.class, RESOURCE_TEMPLATE_PATH);
+        this.template = TemplateFileLoadUtils.loadYamlTemplate(Role.class, RESOURCE_TEMPLATE_PATH);
     }
 
     @Override
     protected Role desired(IgniteResource primary, Context<IgniteResource> context) {
-        ObjectMeta metaData = fromPrimary(primary,COMPONENT).build();
+        ObjectMeta metaData = buildMetadataTemplate(primary,COMPONENT).build();
         
         return new RoleBuilder(template)
                 .withMetadata(metaData)

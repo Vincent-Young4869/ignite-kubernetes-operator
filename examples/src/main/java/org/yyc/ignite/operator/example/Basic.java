@@ -20,10 +20,10 @@ package org.yyc.ignite.operator.example;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientBuilder;
-import org.yyc.ignite.operator.customresource.IgniteResource;
-import org.yyc.ignite.operator.customresource.IgniteSpec;
-import org.yyc.ignite.operator.utils.models.*;
-import org.yyc.ignite.operator.utils.type.K8sServiceType;
+import org.yyc.ignite.operator.api.spec.*;
+import org.yyc.ignite.operator.api.customresource.IgniteResource;
+import org.yyc.ignite.operator.api.spec.IgniteSpec;
+import org.yyc.ignite.operator.api.type.K8sServiceTypeEnum;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -70,7 +70,7 @@ public class Basic {
     @NotNull
     private static K8sServiceSpec createK8sServiceSpec() {
         K8sServiceSpec k8sServiceSpec = new K8sServiceSpec();
-        k8sServiceSpec.setType(K8sServiceType.ClusterIP);
+        k8sServiceSpec.setType(K8sServiceTypeEnum.ClusterIP);
         return k8sServiceSpec;
     }
     
