@@ -13,9 +13,16 @@ import java.io.InputStream;
 
 public final class TemplateFileLoadUtils {
     private static final ObjectMapper yamlObjectMapper;
+    private static final DocumentBuilder documentBuilder;
     
     static {
         yamlObjectMapper = new ObjectMapper(new YAMLFactory());
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        try {
+            documentBuilder = factory.newDocumentBuilder();
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException(e);
+        }
     }
     
     private TemplateFileLoadUtils() {
@@ -48,6 +55,15 @@ public final class TemplateFileLoadUtils {
             throw new RuntimeException("Unable to load classpath resource '" + resource + "': " + ioe.getMessage());
         } catch (ParserConfigurationException | SAXException e) {
             throw new RuntimeException(e);
+        }
+    }
+    
+    private static Document cloneDocument(Document original) {
+        try {
+            Document newDoc = documentBuilder.newDocument();
+            return (Document) newDoc.importNode(original, true);
+        } catch (Exception e) {
+            throw new RuntimeException("Error cloning document", e);
         }
     }
 }

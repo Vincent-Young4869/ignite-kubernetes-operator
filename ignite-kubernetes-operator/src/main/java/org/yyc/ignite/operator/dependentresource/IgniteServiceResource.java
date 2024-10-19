@@ -16,7 +16,7 @@ import java.util.Map;
 
 import static org.yyc.ignite.operator.api.type.K8sServiceTypeEnum.ClusterIP;
 import static org.yyc.ignite.operator.api.type.K8sServiceTypeEnum.LoadBalancer;
-import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.buildMetadataTemplate;
+import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.newK8sMetadataBuilder;
 
 @KubernetesDependent(resourceDiscriminator = IgniteServiceResource.Discriminator.class)
 public class IgniteServiceResource extends CRUDKubernetesDependentResource<Service, IgniteResource> {
@@ -34,7 +34,7 @@ public class IgniteServiceResource extends CRUDKubernetesDependentResource<Servi
     @Override
     protected Service desired(IgniteResource primary, Context<IgniteResource> context) {
         
-        ObjectMeta meta = buildMetadataTemplate(primary, COMPONENT)
+        ObjectMeta meta = newK8sMetadataBuilder(primary, COMPONENT)
                 .withAnnotations(primary.getSpec().getK8sServiceSpec().getAnnotations())
                 .build();
         

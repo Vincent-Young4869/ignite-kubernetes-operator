@@ -13,7 +13,7 @@ import org.yyc.ignite.operator.api.customresource.IgniteResource;
 import org.yyc.ignite.operator.api.utils.TemplateFileLoadUtils;
 
 import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.buildDependentResourceName;
-import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.buildMetadataTemplate;
+import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.newK8sMetadataBuilder;
 
 @KubernetesDependent(resourceDiscriminator = IgniteRoleBindingResource.Discriminator.class)
 public class IgniteRoleBindingResource extends CRUDKubernetesDependentResource<RoleBinding, IgniteResource> {
@@ -30,7 +30,7 @@ public class IgniteRoleBindingResource extends CRUDKubernetesDependentResource<R
     
     @Override
     protected RoleBinding desired(IgniteResource primary, Context<IgniteResource> context) {
-        ObjectMeta metaData = buildMetadataTemplate(primary, COMPONENT).build();
+        ObjectMeta metaData = newK8sMetadataBuilder(primary, COMPONENT).build();
         
         return new RoleBindingBuilder(template)
                 .withMetadata(metaData)

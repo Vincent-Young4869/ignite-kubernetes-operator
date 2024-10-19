@@ -24,13 +24,14 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 import static org.yyc.ignite.operator.api.type.IgniteEnvVarEnum.*;
-import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.buildDependentResourceName;
-import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.buildMetadataTemplate;
+import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.*;
+import static org.yyc.ignite.operator.dependentresource.IgniteConfigMapResource.NODE_CONFIG_FILE_NAME;
 
 @KubernetesDependent(resourceDiscriminator = IgniteStatefulSetResource.Discriminator.class)
 public class IgniteStatefulSetResource extends CRUDNoGCKubernetesDependentResource<StatefulSet, IgniteResource> {
     public static final String COMPONENT = "ignite-cluster";
     private static final String RESOURCE_TEMPLATE_PATH = "templates/ignite-cluster-statefulset.yaml";
+    public static final String IGNITE_NODE_CONTAINER_NAME = "ignite-node";
     private StatefulSet template;
     
     public IgniteStatefulSetResource() {
@@ -38,72 +39,18 @@ public class IgniteStatefulSetResource extends CRUDNoGCKubernetesDependentResour
         this.template = TemplateFileLoadUtils.loadYamlTemplate(StatefulSet.class, RESOURCE_TEMPLATE_PATH);
     }
     
-    @NotNull
-    private static String parseDockerImageReference(IgniteResource primary) {
-        String imageVersion = StringUtils.hasText(primary.getSpec().getIgniteNodeSpec().getIgniteVersion())
-                ? ":" + primary.getSpec().getIgniteNodeSpec().getIgniteVersion().trim()
-                : "";
-        String imageName = StringUtils.hasText(primary.getSpec().getIgniteNodeSpec().getIgniteImage())
-                ? primary.getSpec().getIgniteNodeSpec().getIgniteImage().trim()
-                : Constants.DEFAULT_GRIDGAIN_IMAGE;
-        return imageName + imageVersion;
-    }
-    
-    @NotNull
-    private static Predicate<ContainerBuilder> isIgniteNodeContainer() {
-        return c -> c.getName().equals("ignite-node");
-    }
-    
-    @NotNull
-    private static Map<String, Quantity> buildResourceRequestQuantityMap(IgniteResource primary) {
-        Map<String, Quantity> resourceRequest = new HashMap<>();
-        resourceRequest.put("cpu", new Quantity(primary.getSpec().getIgniteNodeSpec().getIgniteNodeCpu()));
-        resourceRequest.put("memory", new Quantity(primary.getSpec().getIgniteNodeSpec().getIgniteNodeMemory()));
-        return resourceRequest;
-    }
-    
-    @NotNull
-    private static Map<String, Quantity> buildResourceLimitMap(IgniteResource primary) {
-        Map<String, Quantity> resourceLimit = new HashMap<>();
-        resourceLimit.put("cpu", new Quantity(primary.getSpec().getIgniteNodeSpec().getIgniteNodeCpu()));
-        resourceLimit.put("memory", new Quantity(primary.getSpec().getIgniteNodeSpec().getIgniteNodeMemory()));
-        return resourceLimit;
-    }
-    
-    @NotNull
-    private static Predicate<VolumeBuilder> isConfigMapVolume() {
-        return v -> v.getName().equals("config-vol");
-    }
-    
-    private static List<VolumeMount> buildPersistenceVolumeMounts(IgniteResource primary) {
-        VolumeMount dataVol = new VolumeMountBuilder()
-                .withName(primary.getSpec().getPersistenceSpec().getDataVolumeSpec().getName())
-                .withMountPath(primary.getSpec().getPersistenceSpec().getDataVolumeSpec().getMountPath())
-                .build();
-        VolumeMount walVol = new VolumeMountBuilder()
-                .withName(primary.getSpec().getPersistenceSpec().getWalVolumeSpec().getName())
-                .withMountPath(primary.getSpec().getPersistenceSpec().getWalVolumeSpec().getMountPath())
-                .build();
-        VolumeMount walArchiveVol = new VolumeMountBuilder()
-                .withName(primary.getSpec().getPersistenceSpec().getWalArchiveVolumeSpec().getName())
-                .withMountPath(primary.getSpec().getPersistenceSpec().getWalArchiveVolumeSpec().getMountPath())
-                .build();
-        List<VolumeMount> volumes = List.of(dataVol, walVol, walArchiveVol);
-        return volumes;
-    }
-    
     @Override
     protected StatefulSet desired(IgniteResource primary, Context<IgniteResource> context) {
         Map<String, String> annotations = new HashMap<>();
-        annotations.put("ConfigMapMetadata", primary.getSpec().getIgniteConfigMapSpec().toString());
-        annotations.put("podConfig", primary.getSpec().getIgniteNodeSpec().toString());
-        ObjectMeta meta = buildMetadataTemplate(primary, COMPONENT)
+        annotations.put("ConfigMapDataHash", sha256Hex(primary.getSpec().getIgniteConfigMapSpec().toString()));
+        annotations.put("podConfigHash", sha256Hex(primary.getSpec().getIgniteNodeSpec().toString()));
+        ObjectMeta metadata = newK8sMetadataBuilder(primary, COMPONENT)
                 .withAnnotations(annotations)
                 .build();
         
         return new StatefulSetBuilder(template)
-                .withMetadata(meta)
-                .withSpec(buildSpec(primary, meta))
+                .withMetadata(metadata)
+                .withSpec(buildSpec(primary, metadata))
                 .build();
     }
     
@@ -165,12 +112,61 @@ public class IgniteStatefulSetResource extends CRUDNoGCKubernetesDependentResour
         return podSpec;
     }
     
+    private Predicate<ContainerBuilder> isIgniteNodeContainer() {
+        return c -> c.getName().equals(IGNITE_NODE_CONTAINER_NAME);
+    }
+    
+    private Predicate<VolumeBuilder> isConfigMapVolume() {
+        return v -> v.getName().equals("config-vol");
+    }
+    
+    private String parseDockerImageReference(IgniteResource primary) {
+        String imageVersion = StringUtils.hasText(primary.getSpec().getIgniteNodeSpec().getIgniteVersion())
+                ? ":" + primary.getSpec().getIgniteNodeSpec().getIgniteVersion().trim()
+                : "";
+        String imageName = StringUtils.hasText(primary.getSpec().getIgniteNodeSpec().getIgniteImage())
+                ? primary.getSpec().getIgniteNodeSpec().getIgniteImage().trim()
+                : Constants.DEFAULT_GRIDGAIN_IMAGE;
+        return imageName + imageVersion;
+    }
+    
     private List<EnvVar> buildEnvVarList(IgniteResource primary) {
         List<EnvVar> envVars = new ArrayList<>();
         envVars.add(new EnvVar(OPTION_LIBS.name(), primary.getSpec().getIgniteNodeSpec().getIgniteOptionalLibs(), null));
         envVars.add(new EnvVar(JVM_OPTS.name(), primary.getSpec().getIgniteNodeSpec().getJvmOpts(), null));
-        envVars.add(new EnvVar(CONFIG_URI.name(), "file:///opt/ignite/config/node-configuration.xml", null));
+        envVars.add(new EnvVar(CONFIG_URI.name(), "file:///opt/ignite/config/" + NODE_CONFIG_FILE_NAME, null));
         return envVars;
+    }
+    
+    private Map<String, Quantity> buildResourceRequestQuantityMap(IgniteResource primary) {
+        Map<String, Quantity> resourceRequest = new HashMap<>();
+        resourceRequest.put("cpu", new Quantity(primary.getSpec().getIgniteNodeSpec().getIgniteNodeCpu()));
+        resourceRequest.put("memory", new Quantity(primary.getSpec().getIgniteNodeSpec().getIgniteNodeMemory()));
+        return resourceRequest;
+    }
+    
+    private Map<String, Quantity> buildResourceLimitMap(IgniteResource primary) {
+        Map<String, Quantity> resourceLimit = new HashMap<>();
+        resourceLimit.put("cpu", new Quantity(primary.getSpec().getIgniteNodeSpec().getIgniteNodeCpu()));
+        resourceLimit.put("memory", new Quantity(primary.getSpec().getIgniteNodeSpec().getIgniteNodeMemory()));
+        return resourceLimit;
+    }
+    
+    private List<VolumeMount> buildPersistenceVolumeMounts(IgniteResource primary) {
+        VolumeMount dataVol = new VolumeMountBuilder()
+                .withName(primary.getSpec().getPersistenceSpec().getDataVolumeSpec().getName())
+                .withMountPath(primary.getSpec().getPersistenceSpec().getDataVolumeSpec().getMountPath())
+                .build();
+        VolumeMount walVol = new VolumeMountBuilder()
+                .withName(primary.getSpec().getPersistenceSpec().getWalVolumeSpec().getName())
+                .withMountPath(primary.getSpec().getPersistenceSpec().getWalVolumeSpec().getMountPath())
+                .build();
+        VolumeMount walArchiveVol = new VolumeMountBuilder()
+                .withName(primary.getSpec().getPersistenceSpec().getWalArchiveVolumeSpec().getName())
+                .withMountPath(primary.getSpec().getPersistenceSpec().getWalArchiveVolumeSpec().getMountPath())
+                .build();
+        List<VolumeMount> volumes = List.of(dataVol, walVol, walArchiveVol);
+        return volumes;
     }
     
     private List<PersistentVolumeClaim> buildPvcTemplates(PersistenceSpec persistenceSpec) {

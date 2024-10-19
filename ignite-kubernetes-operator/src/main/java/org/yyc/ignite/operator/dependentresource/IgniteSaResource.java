@@ -15,7 +15,7 @@ import org.yyc.ignite.operator.api.utils.TemplateFileLoadUtils;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.buildMetadataTemplate;
+import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.newK8sMetadataBuilder;
 
 @KubernetesDependent(resourceDiscriminator = IgniteSaResource.Discriminator.class)
 public class IgniteSaResource extends CRUDKubernetesDependentResource<ServiceAccount, IgniteResource> {
@@ -39,7 +39,7 @@ public class IgniteSaResource extends CRUDKubernetesDependentResource<ServiceAcc
     
     @Override
     protected ServiceAccount desired(IgniteResource primary, Context<IgniteResource> context) {
-        ObjectMetaBuilder metaBuilder = buildMetadataTemplate(primary, COMPONENT);
+        ObjectMetaBuilder metaBuilder = newK8sMetadataBuilder(primary, COMPONENT);
         ObjectMeta objectMeta = primary.getSpec().getIgniteSaSpec().isBindToGoogleSa()
                 ? metaBuilder.withAnnotations(buildAnnotationsMap(primary)).build()
                 : metaBuilder.build();
