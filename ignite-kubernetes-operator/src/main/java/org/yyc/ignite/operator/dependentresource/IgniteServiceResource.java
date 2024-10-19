@@ -23,12 +23,10 @@ public class IgniteServiceResource extends CRUDKubernetesDependentResource<Servi
     
     public static final String COMPONENT = "ignite-service";
     private static final String RESOURCE_TEMPLATE_PATH = "templates/ignite-service.yaml";
-    
-    private Service template;
+    private static final Service RESOURCE_TEMPLATE = TemplateFileLoadUtils.loadYamlTemplate(Service.class, RESOURCE_TEMPLATE_PATH);
     
     public IgniteServiceResource() {
         super(Service.class);
-        this.template = TemplateFileLoadUtils.loadYamlTemplate(Service.class, RESOURCE_TEMPLATE_PATH);
     }
     
     @Override
@@ -49,14 +47,14 @@ public class IgniteServiceResource extends CRUDKubernetesDependentResource<Servi
     
     private Service buildClusterIpService(IgniteResource primary, ObjectMeta meta, Map<String, String> selector) {
         return primary.getSpec().getK8sServiceSpec().getIp().isBlank()
-                ? new ServiceBuilder(template)
+                ? new ServiceBuilder(RESOURCE_TEMPLATE)
                 .withMetadata(meta)
                 .editSpec()
                 .withType(ClusterIP.name())
                 .withSelector(selector)
                 .endSpec()
                 .build()
-                : new ServiceBuilder(template)
+                : new ServiceBuilder(RESOURCE_TEMPLATE)
                 .withMetadata(meta)
                 .editSpec()
                 .withType(ClusterIP.name())
@@ -68,14 +66,14 @@ public class IgniteServiceResource extends CRUDKubernetesDependentResource<Servi
     
     private Service buildLoadBalancerService(IgniteResource primary, ObjectMeta meta, Map<String, String> selector) {
         return primary.getSpec().getK8sServiceSpec().getIp().isBlank()
-                ? new ServiceBuilder(template)
+                ? new ServiceBuilder(RESOURCE_TEMPLATE)
                 .withMetadata(meta)
                 .editSpec()
                 .withType(LoadBalancer.name())
                 .withSelector(selector)
                 .endSpec()
                 .build()
-                : new ServiceBuilder(template)
+                : new ServiceBuilder(RESOURCE_TEMPLATE)
                 .withMetadata(meta)
                 .editSpec()
                 .withType(LoadBalancer.name())

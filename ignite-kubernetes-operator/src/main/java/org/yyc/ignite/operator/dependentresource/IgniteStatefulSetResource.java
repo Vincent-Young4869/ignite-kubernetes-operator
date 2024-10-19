@@ -8,7 +8,6 @@ import io.fabric8.kubernetes.api.model.apps.StatefulSetSpecBuilder;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDNoGCKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.util.StringUtils;
 import org.yyc.ignite.operator.api.AbstractIgniteResourceDiscriminator;
 import org.yyc.ignite.operator.api.customresource.IgniteResource;
@@ -30,13 +29,12 @@ import static org.yyc.ignite.operator.dependentresource.IgniteConfigMapResource.
 @KubernetesDependent(resourceDiscriminator = IgniteStatefulSetResource.Discriminator.class)
 public class IgniteStatefulSetResource extends CRUDNoGCKubernetesDependentResource<StatefulSet, IgniteResource> {
     public static final String COMPONENT = "ignite-cluster";
-    private static final String RESOURCE_TEMPLATE_PATH = "templates/ignite-cluster-statefulset.yaml";
     public static final String IGNITE_NODE_CONTAINER_NAME = "ignite-node";
-    private StatefulSet template;
+    private static final String RESOURCE_TEMPLATE_PATH = "templates/ignite-cluster-statefulset.yaml";
+    private static final StatefulSet RESOURCE_TEMPLATE = TemplateFileLoadUtils.loadYamlTemplate(StatefulSet.class, RESOURCE_TEMPLATE_PATH);
     
     public IgniteStatefulSetResource() {
         super(StatefulSet.class);
-        this.template = TemplateFileLoadUtils.loadYamlTemplate(StatefulSet.class, RESOURCE_TEMPLATE_PATH);
     }
     
     @Override
@@ -48,7 +46,7 @@ public class IgniteStatefulSetResource extends CRUDNoGCKubernetesDependentResour
                 .withAnnotations(annotations)
                 .build();
         
-        return new StatefulSetBuilder(template)
+        return new StatefulSetBuilder(RESOURCE_TEMPLATE)
                 .withMetadata(metadata)
                 .withSpec(buildSpec(primary, metadata))
                 .build();
@@ -85,7 +83,7 @@ public class IgniteStatefulSetResource extends CRUDNoGCKubernetesDependentResour
     }
     
     private PodSpec buildPodSpec(IgniteResource primary) {
-        PodSpec podSpec = new PodSpecBuilder(template.getSpec().getTemplate().getSpec())
+        PodSpec podSpec = new PodSpecBuilder(RESOURCE_TEMPLATE.getSpec().getTemplate().getSpec())
                 .editMatchingContainer(isIgniteNodeContainer())// Assumes we have a single container
                 .withImage(parseDockerImageReference(primary))
                 .withEnv(buildEnvVarList(primary))

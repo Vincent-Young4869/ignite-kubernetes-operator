@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * example of creating an ignite cluster using k8s api (with operator running)
  */
-public class Basic {
+public class CreateIgniteCluster {
     public static void main(String[] args) {
         IgniteResource igniteResource = new IgniteResource();
         igniteResource.setMetadata(new ObjectMetaBuilder()

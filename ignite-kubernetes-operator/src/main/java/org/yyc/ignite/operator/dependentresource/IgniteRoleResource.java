@@ -17,19 +17,17 @@ public class IgniteRoleResource extends CRUDKubernetesDependentResource<Role, Ig
     
     public static final String COMPONENT = "ignite-role";
     private static final String RESOURCE_TEMPLATE_PATH = "templates/ignite-role.yaml";
-    
-    private Role template;
+    private static final Role RESOURCE_TEMPLATE = TemplateFileLoadUtils.loadYamlTemplate(Role.class, RESOURCE_TEMPLATE_PATH);
     
     public IgniteRoleResource() {
         super(Role.class);
-        this.template = TemplateFileLoadUtils.loadYamlTemplate(Role.class, RESOURCE_TEMPLATE_PATH);
     }
     
     @Override
     protected Role desired(IgniteResource primary, Context<IgniteResource> context) {
         ObjectMeta metaData = newK8sMetadataBuilder(primary, COMPONENT).build();
         
-        return new RoleBuilder(template)
+        return new RoleBuilder(RESOURCE_TEMPLATE)
                 .withMetadata(metaData)
                 .build();
     }

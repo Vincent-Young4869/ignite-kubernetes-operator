@@ -22,12 +22,10 @@ public class IgniteSaResource extends CRUDKubernetesDependentResource<ServiceAcc
     
     public static final String COMPONENT = "ignite-sa";
     private static final String RESOURCE_TEMPLATE_PATH = "templates/ignite-sa.yaml";
-    
-    private ServiceAccount template;
+    private final ServiceAccount RESOURCE_TEMPLATE = TemplateFileLoadUtils.loadYamlTemplate(ServiceAccount.class, RESOURCE_TEMPLATE_PATH);
     
     public IgniteSaResource() {
         super(ServiceAccount.class);
-        this.template = TemplateFileLoadUtils.loadYamlTemplate(ServiceAccount.class, RESOURCE_TEMPLATE_PATH);
     }
     
     @NotNull
@@ -44,7 +42,7 @@ public class IgniteSaResource extends CRUDKubernetesDependentResource<ServiceAcc
                 ? metaBuilder.withAnnotations(buildAnnotationsMap(primary)).build()
                 : metaBuilder.build();
         
-        return new ServiceAccountBuilder(template)
+        return new ServiceAccountBuilder(RESOURCE_TEMPLATE)
                 .withMetadata(objectMeta)
                 .build();
     }

@@ -5,7 +5,6 @@ import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
-import org.w3c.dom.Document;
 import org.yyc.ignite.operator.api.AbstractIgniteResourceDiscriminator;
 import org.yyc.ignite.operator.api.customresource.IgniteResource;
 import org.yyc.ignite.operator.api.utils.TemplateFileLoadUtils;
@@ -22,17 +21,15 @@ public class IgniteConfigMapResource extends CRUDKubernetesDependentResource<Con
     public static final String COMPONENT = "ignite-configmap";
     private static final String RESOURCE_TEMPLATE_PATH = "templates/ignite-node-configuration.xml";
     public static final String NODE_CONFIG_FILE_NAME = "node-configuration.xml";
-    
-    private Document configData;
+    private static final String CONFIG_DATA = TemplateFileLoadUtils.loadXmlTemplate(RESOURCE_TEMPLATE_PATH);
     
     public IgniteConfigMapResource() {
         super(ConfigMap.class);
-        this.configData = TemplateFileLoadUtils.loadXmlTemplate(RESOURCE_TEMPLATE_PATH);
     }
     
     @Override
     protected ConfigMap desired(IgniteResource primary, Context<IgniteResource> context) {
-        String updatedConfigData = updateConfigMapXmlData(configData,
+        String updatedConfigData = updateConfigMapXmlData(CONFIG_DATA,
                 primary.getSpec().getIgniteConfigMapSpec(),
                 primary.getSpec().getPersistenceSpec(),
                 primary.getMetadata().getName() + "-" + IgniteServiceResource.COMPONENT,

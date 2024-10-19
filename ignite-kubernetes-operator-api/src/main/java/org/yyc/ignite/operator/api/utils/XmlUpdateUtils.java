@@ -4,15 +4,22 @@ import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.yyc.ignite.operator.api.spec.IgniteConfigMapSpec;
 import org.yyc.ignite.operator.api.spec.PersistenceSpec;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import java.io.IOException;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Objects;
 
@@ -26,7 +33,7 @@ public class XmlUpdateUtils {
     private static final String IGNITE_K8S_IP_FINDER = "org.apache.ignite.spi.discovery.tcp.ipfinder.kubernetes.TcpDiscoveryKubernetesIpFinder";
     
     // TODO: investigate a better way to manipulate xml file
-    public static String updateConfigMapXmlData(Document doc,
+    public static String updateConfigMapXmlData(String data,
                                                 IgniteConfigMapSpec igniteConfigMapSpec,
                                                 PersistenceSpec persistenceSpec,
                                                 String igniteServiceName, String namespace) {
@@ -36,6 +43,7 @@ public class XmlUpdateUtils {
             return igniteConfigMapSpec.getConfigXmlOverride();
         }
         
+        Document doc = parseStringToXmlDoc(data);
         doc.getDocumentElement().normalize();
         NodeList beanList = doc.getElementsByTagName(BEAN.tagValue());
         for (int i = 0; i < beanList.getLength(); i++) {
@@ -52,10 +60,35 @@ public class XmlUpdateUtils {
         if (persistenceSpec.isPersistenceEnabled()) {
             setIgniteDataPersistencePath(doc, persistenceSpec, beanList);
         }
+        return parseXmlDocToString(doc);
+    }
+    
+    public static Document parseStringToXmlDoc(String data) {
         try {
-            return parseXmlDocToString(doc);
-        } catch (TransformerException e) {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            return builder.parse(new InputSource(new StringReader(data)));
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException("Exception during parsing String to XML doc", e);
+        } catch (IOException | SAXException e) {
             throw new RuntimeException(e);
+        }
+    }
+    
+    public static String parseXmlDocToString(Document doc) {
+        try {
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            Transformer transformer = transformerFactory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            DOMSource domSource = new DOMSource(doc);
+            
+            StringWriter writer = new StringWriter();
+            StreamResult result = new StreamResult(writer);
+            transformer.transform(domSource, result);
+            
+            return writer.toString();
+        } catch (TransformerException e) {
+            throw new RuntimeException("Exception during parsing XML doc to String", e);
         }
     }
     
@@ -151,18 +184,5 @@ public class XmlUpdateUtils {
                 property.setAttribute(VALUE.tagValue(), "true");
             }
         }
-    }
-    
-    private static String parseXmlDocToString(Document doc) throws TransformerException {
-        TransformerFactory transformerFactory = TransformerFactory.newInstance();
-        Transformer transformer = transformerFactory.newTransformer();
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-        DOMSource domSource = new DOMSource(doc);
-        
-        StringWriter writer = new StringWriter();
-        StreamResult result = new StreamResult(writer);
-        transformer.transform(domSource, result);
-        
-        return writer.toString();
     }
 }

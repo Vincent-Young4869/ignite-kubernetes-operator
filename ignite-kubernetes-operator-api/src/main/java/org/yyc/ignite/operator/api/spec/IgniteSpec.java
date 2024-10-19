@@ -12,5 +12,5 @@ public class IgniteSpec {
     
     private K8sServiceSpec k8sServiceSpec = new K8sServiceSpec();
     private IgniteConfigMapSpec igniteConfigMapSpec = new IgniteConfigMapSpec();
-    private PersistenceSpec persistenceSpec;
+    private PersistenceSpec persistenceSpec = new PersistenceSpec();
 }

@@ -20,19 +20,17 @@ public class IgniteRoleBindingResource extends CRUDKubernetesDependentResource<R
     
     public static final String COMPONENT = "ignite-role-binding";
     private static final String RESOURCE_TEMPLATE_PATH = "templates/ignite-rolebinding.yaml";
-    
-    private RoleBinding template;
+    private static final RoleBinding RESOURCE_TEMPLATE = TemplateFileLoadUtils.loadYamlTemplate(RoleBinding.class, RESOURCE_TEMPLATE_PATH);
     
     public IgniteRoleBindingResource() {
         super(RoleBinding.class);
-        this.template = TemplateFileLoadUtils.loadYamlTemplate(RoleBinding.class, RESOURCE_TEMPLATE_PATH);
     }
     
     @Override
     protected RoleBinding desired(IgniteResource primary, Context<IgniteResource> context) {
         ObjectMeta metaData = newK8sMetadataBuilder(primary, COMPONENT).build();
         
-        return new RoleBindingBuilder(template)
+        return new RoleBindingBuilder(RESOURCE_TEMPLATE)
                 .withMetadata(metaData)
                 .withRoleRef(new RoleRefBuilder()
                         .withKind("Role")
