@@ -82,11 +82,11 @@ public class CreateMultipleClusters {
         igniteNodeSpec.setIgniteVersion("8.8.42-openjdk17");
         igniteNodeSpec.setIgniteOptionalLibs("ignite-kubernetes,ignite-rest-http");
         igniteNodeSpec.setJvmOpts("-DIGNITE_WAL_MMAP=false -DIGNITE_WAIT_FOR_BACKUPS_ON_SHUTDOWN=true "
-                + "-server -Xms1G -Xmx1G -XX:+AlwaysPreTouch -XX:+UseG1GC -XX:+ScavengeBeforeFullGC "
+                + "-server -Xms700m -Xmx700m -XX:+AlwaysPreTouch -XX:+UseG1GC -XX:+ScavengeBeforeFullGC "
                 + "-XX:+DisableExplicitGC -XX:MetaspaceSize=200M -XX:MinMetaspaceFreeRatio=40 "
                 + "-XX:MaxMetaspaceFreeRatio=60");
         igniteNodeSpec.setIgniteNodeCpu("1");
-        igniteNodeSpec.setIgniteNodeMemory("2Gi");
+        igniteNodeSpec.setIgniteNodeMemory("1Gi");
         return igniteNodeSpec;
     }
     

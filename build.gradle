@@ -8,6 +8,7 @@ plugins {
 }
 
 ext {
+    set('cucumberVersion', '6.4.0')
 }
 
 def Properties props = new Properties()
