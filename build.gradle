@@ -21,7 +21,7 @@ if (propFile.canRead()) {
 }
 
 allprojects {
-    group = 'org.example'
+    group = 'com.yyc'
     version versionCode
 }
 
@@ -66,7 +66,7 @@ subprojects {
         testImplementation platform('org.junit:junit-bom:5.10.0')
         testImplementation 'org.junit.jupiter:junit-jupiter'
 
-        if (!name.endsWith("util")) {
+        if (!name.endsWith("api")) {
             apply plugin: 'com.bmuschko.docker-remote-api'
         }
     }
