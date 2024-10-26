@@ -1,6 +1,4 @@
 plugins {
-    id 'java'
-
     id 'application'
 }
 
@@ -28,7 +26,7 @@ application {
     mainClassName = 'org.yyc.ignite.operator.e2e.tests.RunBehaviorTest'
 }
 
-task cucumber() {
+tasks.register('cucumber') {
     dependsOn assemble, compileTestJava, build
 
     doLast {

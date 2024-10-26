@@ -6,6 +6,7 @@ import java.util.Collection;
 
 public class TagsUtils {
     private static final String RESOURCE_NAME_TAG_PREFIX = "@resourceName:";
+    public static final String RESOURCE_NAME_NOT_FOUND_MESSAGE = String.format("Tag '%s' need be specified in scenarios", RESOURCE_NAME_TAG_PREFIX);
     
     public static String getResourceNameFromScenario(Scenario scenario) {
         Collection<String> tags = scenario.getSourceTagNames();

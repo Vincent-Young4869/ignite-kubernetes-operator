@@ -13,6 +13,8 @@ import org.yyc.ignite.operator.api.type.lifecycle.IgniteClusterLifecycleStateEnu
 import java.util.Objects;
 import java.util.Optional;
 
+import static org.yyc.ignite.operator.e2e.tests.utils.BuildIgniteResourceUtils.DEFAULT_NAMESPACE;
+
 public class CheckSteps {
     @Autowired
     private KubernetesClient kubernetesClient;
@@ -21,7 +23,7 @@ public class CheckSteps {
     public void targetResourceIsRunning(String status, String resourceName) {
         Resource<IgniteResource> resource = kubernetesClient
                 .resources(IgniteResource.class)
-                .inNamespace("e2e-test")
+                .inNamespace(DEFAULT_NAMESPACE)
                 .withName(resourceName);
         Objects.requireNonNull(resource, "Ignite resource " + resourceName + " is null when trying to get its status");
         IgniteClusterLifecycleStateEnum actualStatus = resource.get().getStatus().getIgniteClusterLifecycleState();

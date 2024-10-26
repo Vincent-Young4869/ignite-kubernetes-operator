@@ -16,6 +16,8 @@ import org.yyc.ignite.operator.e2e.tests.config.SpringConfig;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.yyc.ignite.operator.e2e.tests.utils.BuildIgniteResourceUtils.DEFAULT_NAMESPACE;
+
 @SpringBootTest
 @CucumberContextConfiguration
 @TestPropertySource(locations = "classpath:test.properties")
@@ -34,7 +36,7 @@ public class UtilsSteps {
     public void checkGivenIgniteResourceNonExisted(String resourceName) {
         Resource<IgniteResource> resource = kubernetesClient
                 .resources(IgniteResource.class)
-                .inNamespace("e2e-test")
+                .inNamespace(DEFAULT_NAMESPACE)
                 .withName(resourceName);
         Assert.assertNull(resource.get());
     }
