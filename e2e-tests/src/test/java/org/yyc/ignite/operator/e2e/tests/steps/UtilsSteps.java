@@ -4,6 +4,7 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.spring.CucumberContextConfiguration;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import lombok.RequiredArgsConstructor;
 import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,10 +32,10 @@ public class UtilsSteps {
     
     @Given("There is no IgniteResource with name {string}")
     public void checkGivenIgniteResourceNonExisted(String resourceName) {
-        boolean isResourceExist = kubernetesClient
+        Resource<IgniteResource> resource = kubernetesClient
                 .resources(IgniteResource.class)
-                .resources()
-                .anyMatch(r -> r.get().getMetadata().getName().equals(resourceName));
-        Assert.assertFalse(isResourceExist);
+                .inNamespace("e2e-test")
+                .withName(resourceName);
+        Assert.assertNull(resource.get());
     }
 }

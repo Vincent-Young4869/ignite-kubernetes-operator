@@ -25,37 +25,36 @@ public class CleanupSteps {
     @Autowired
     private KubernetesClient kubernetesClient;
     
-    @AfterAll
-    public static void cleanupNamespaces() throws InterruptedException {
-        sleepForSeconds(120);
-        KubernetesClient kubernetesClient = new KubernetesClientBuilder().build();
-        for (String namespace : NAMESPACES_FOR_TEST) {
-            Namespace ns = new NamespaceBuilder()
-                    .withNewMetadata()
-                    .withName(namespace)
-                    .endMetadata()
-                    .build();
-            kubernetesClient.namespaces().delete(ns);
-        }
-    }
+    // @AfterAll
+    // public static void cleanupNamespaces() throws InterruptedException {
+    //     sleepForSeconds(120);
+    //     KubernetesClient kubernetesClient = new KubernetesClientBuilder().build();
+    //     for (String namespace : NAMESPACES_FOR_TEST) {
+    //         Namespace ns = new NamespaceBuilder()
+    //                 .withNewMetadata()
+    //                 .withName(namespace)
+    //                 .endMetadata()
+    //                 .build();
+    //         kubernetesClient.namespaces().delete(ns);
+    //     }
+    // }
     
     public void deleteIgniteResource(String resourceName) {
-        Optional<Resource<IgniteResource>> resourceOptional = kubernetesClient
+        Resource<IgniteResource> resource = kubernetesClient
                 .resources(IgniteResource.class)
-                .resources()
-                .filter(r -> r.get().getMetadata().getName().equals(resourceName))
-                .findFirst();
-        if (resourceOptional.isEmpty()) {
+                .inNamespace("e2e-test")
+                .withName(resourceName);
+        if (Objects.isNull(resource)) {
             log.warn("Trying to delete resource {} but it does not exist", resourceName);
             return;
         }
-        kubernetesClient.resource(resourceOptional.get().get()).delete();
+        kubernetesClient.resource(resource.get()).delete();
     }
     
     @After(value = "@cleanupIgniteResource", order = CLEAN_UP_RESOURCE_ORDER)
     public void cleanupIgniteResource(Scenario scenario) {
-        String name = getResourceNameFromScenario(scenario);
-        Objects.requireNonNull(name, "Tags @resourceName need be specified in scenarios");
-        
+        String resourceName = getResourceNameFromScenario(scenario);
+        Objects.requireNonNull(resourceName, "Tags @resourceName need be specified in scenarios");
+        deleteIgniteResource(resourceName);
     }
 }

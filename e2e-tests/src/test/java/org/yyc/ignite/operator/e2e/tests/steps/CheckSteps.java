@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.yyc.ignite.operator.api.customresource.IgniteResource;
 import org.yyc.ignite.operator.api.type.lifecycle.IgniteClusterLifecycleStateEnum;
 
+import java.util.Objects;
 import java.util.Optional;
 
 public class CheckSteps {
@@ -18,13 +19,11 @@ public class CheckSteps {
     
     @Then("Ignite user should observe {string} status for IgniteResource {string}")
     public void targetResourceIsRunning(String status, String resourceName) {
-        Optional<Resource<IgniteResource>> resourceOptional = kubernetesClient
+        Resource<IgniteResource> resource = kubernetesClient
                 .resources(IgniteResource.class)
-                .resources()
-                .filter(r -> r.get().getMetadata().getName().equals(resourceName))
-                .findFirst();
-        Assert.assertTrue(resourceOptional.isPresent());
-        Resource<IgniteResource> resource = resourceOptional.get();
+                .inNamespace("e2e-test")
+                .withName(resourceName);
+        Objects.requireNonNull(resource, "Ignite resource " + resourceName + " is null when trying to get its status");
         IgniteClusterLifecycleStateEnum actualStatus = resource.get().getStatus().getIgniteClusterLifecycleState();
         IgniteClusterLifecycleStateEnum expectedStatus = IgniteClusterLifecycleStateEnum.valueOf(status);
         Assert.assertEquals(expectedStatus, actualStatus);
