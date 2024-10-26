@@ -7,6 +7,10 @@ plugins {
 dependencies {
     implementation project(":ignite-kubernetes-operator-api")
 
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.projectlombok:lombok'
+
     testImplementation "io.cucumber:cucumber-java:${cucumberVersion}"
     testImplementation "io.cucumber:cucumber-junit-platform-engine:${cucumberVersion}"
     testImplementation "io.cucumber:cucumber-junit:${cucumberVersion}"
@@ -18,14 +22,6 @@ dependencies {
     }
 }
 
-protobuf {
-    // Configure the protoc executable
-    protoc {
-        // Download from repositories
-        artifact = 'com.google.protobuf:protoc:3.25.1'
-    }
-}
-
 configurations {
     cucumberRuntime {
         extendsFrom testImplementation
@@ -33,7 +29,6 @@ configurations {
 }
 
 application {
-    // Define the main class for the application.
     mainClassName = 'org.yyc.ignite.operator.e2e.tests.RunBehaviorTest'
 }
 

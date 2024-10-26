@@ -10,7 +10,8 @@ import org.junit.runner.RunWith;
                 "html:build/cucumber-html-report",
                 "json:build/cucumber.json"
         },
-        features = "src/test/resources/org.yyc.ignite.operator.e2e.tests.features"
+        features = "src/test/resources/org.yyc.ignite.operator.e2e.tests.features",
+        glue = "org.yyc.ignite.operator.e2e.tests.steps"
 )
 public class RunBehaviorTest {
 }

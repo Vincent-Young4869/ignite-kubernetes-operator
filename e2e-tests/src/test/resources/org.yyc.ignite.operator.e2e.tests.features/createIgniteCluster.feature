@@ -1,6 +1,6 @@
-Feature: Ignite user creates an IgniteResource through operator
+Feature: Ignite user creates an IgniteResource through the operator
 
-  @teardownIgniteResource
+  @cleanupIgniteResource
   @resourceName:test_create_single_cluster
   Scenario: Create an IgniteResource if it doesn't exist
     Given There is no IgniteResource with name "test_create_single_cluster"
