@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+    implementation project(":ignite-kubernetes-operator")
     implementation project(":ignite-kubernetes-operator-api")
 
     testImplementation "io.cucumber:cucumber-java:${cucumberVersion}"

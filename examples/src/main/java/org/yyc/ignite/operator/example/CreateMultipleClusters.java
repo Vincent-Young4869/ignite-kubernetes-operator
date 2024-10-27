@@ -33,9 +33,9 @@ import java.util.List;
  */
 public class CreateMultipleClusters {
     public static void main(String[] args) {
-        IgniteResource resource1 = createIgniteResource("resource1", "ignite", 1, 120, false);
-        IgniteResource resource2 = createIgniteResource("resource2", "ignite", 2, 110, true);
-        IgniteResource resource3 = createIgniteResource("resource3", "yyc-test", 1, 100, false);
+        IgniteResource resource1 = createIgniteResource("resource1", "ignite", 1,  120, true);
+        IgniteResource resource2 = createIgniteResource("resource2", "ignite", 2,  110, false);
+        IgniteResource resource3 = createIgniteResource("resource3", "yyc-test", 1,100, true);
         List<IgniteResource> resources = Arrays.asList(resource1, resource2, resource3);
         
         // resources.parallelStream().forEach(CreateMultipleClusters::createResource);

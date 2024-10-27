@@ -15,10 +15,12 @@ public class BuildIgniteResourceUtils {
     public static final List<String> NAMESPACES_FOR_TEST = List.of(DEFAULT_NAMESPACE, TEST_NAMESPACE2, TEST_NAMESPACE3);
     
     public static IgniteResource buildDefaultIgniteResource(String name) {
-        return buildIgniteResource(DEFAULT_NAMESPACE, name, 1, true);
+        return buildIgniteResource(name, DEFAULT_NAMESPACE, 1, "120 * 1024 * 1024", true);
     }
     
-    public static IgniteResource buildIgniteResource(String namespace, String name, int replica, boolean enablePersistence) {
+    public static IgniteResource buildIgniteResource(String name, String namespace,
+                                                     int replica, String relationDataRegionSize,
+                                                     boolean enablePvc) {
         IgniteResource igniteResource = new IgniteResource();
         igniteResource.setMetadata(new ObjectMetaBuilder()
                 .withNamespace(namespace)
@@ -29,8 +31,8 @@ public class BuildIgniteResourceUtils {
         
         spec.setIgniteNodeSpec(createNodeSpec());
         spec.setK8sServiceSpec(createK8sServiceSpec());
-        spec.setPersistenceSpec(createPersistenceSpec(enablePersistence));
-        spec.setIgniteConfigMapSpec(createIgniteConfigMapSpec());
+        spec.setPersistenceSpec(createPersistenceSpec(enablePvc));
+        spec.setIgniteConfigMapSpec(createIgniteConfigMapSpec(relationDataRegionSize));
         
         igniteResource.setSpec(spec);
         return igniteResource;
@@ -43,11 +45,11 @@ public class BuildIgniteResourceUtils {
         igniteNodeSpec.setIgniteVersion("8.8.42-openjdk17");
         igniteNodeSpec.setIgniteOptionalLibs("ignite-kubernetes,ignite-rest-http");
         igniteNodeSpec.setJvmOpts("-DIGNITE_WAL_MMAP=false -DIGNITE_WAIT_FOR_BACKUPS_ON_SHUTDOWN=true "
-                + "-server -Xms1G -Xmx1G -XX:+AlwaysPreTouch -XX:+UseG1GC -XX:+ScavengeBeforeFullGC "
+                + "-server -Xms700m -Xmx700m -XX:+AlwaysPreTouch -XX:+UseG1GC -XX:+ScavengeBeforeFullGC "
                 + "-XX:+DisableExplicitGC -XX:MetaspaceSize=200M -XX:MinMetaspaceFreeRatio=40 "
                 + "-XX:MaxMetaspaceFreeRatio=60");
         igniteNodeSpec.setIgniteNodeCpu("1");
-        igniteNodeSpec.setIgniteNodeMemory("2Gi");
+        igniteNodeSpec.setIgniteNodeMemory("1Gi");
         return igniteNodeSpec;
     }
     
@@ -76,10 +78,10 @@ public class BuildIgniteResourceUtils {
     }
     
     @NotNull
-    private static IgniteConfigMapSpec createIgniteConfigMapSpec() {
+    private static IgniteConfigMapSpec createIgniteConfigMapSpec(String relationDataRegionSize) {
         IgniteConfigMapSpec configMapSpec = new IgniteConfigMapSpec();
         configMapSpec.setDefaultDataRegionSize("110 * 1024 * 1024");
-        configMapSpec.setRelationalDataRegionSize("120 * 1024 * 1024");
+        configMapSpec.setRelationalDataRegionSize(relationDataRegionSize);
         return configMapSpec;
     }
 }

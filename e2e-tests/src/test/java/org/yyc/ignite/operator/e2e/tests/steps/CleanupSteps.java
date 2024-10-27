@@ -11,6 +11,7 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.yyc.ignite.operator.api.customresource.IgniteResource;
+import org.yyc.ignite.operator.e2e.tests.config.SharedScenarioContext;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -26,6 +27,8 @@ import static org.yyc.ignite.operator.e2e.tests.utils.TagsUtils.getResourceNameF
 public class CleanupSteps {
     @Autowired
     private KubernetesClient kubernetesClient;
+    @Autowired
+    private SharedScenarioContext sharedScenarioContext;
     
     @AfterAll
     public static void cleanupNamespaces() throws InterruptedException {
@@ -57,5 +60,11 @@ public class CleanupSteps {
         String resourceName = getResourceNameFromScenario(scenario);
         Objects.requireNonNull(resourceName, RESOURCE_NAME_NOT_FOUND_MESSAGE);
         deleteIgniteResource(resourceName, DEFAULT_NAMESPACE);
+    }
+    
+    @After(value = "@cleanupIgniteResourcesFromSharedScenarioContext", order = CLEAN_UP_RESOURCE_ORDER)
+    public void cleanupMultipleIgniteResourcesFromSharedScenarioContext() {
+        sharedScenarioContext.getTestResources()
+                .forEach(r -> deleteIgniteResource(r.getMetadata().getName(), r.getMetadata().getNamespace()));
     }
 }

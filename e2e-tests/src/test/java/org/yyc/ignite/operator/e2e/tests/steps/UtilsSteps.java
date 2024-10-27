@@ -12,8 +12,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.yyc.ignite.operator.api.customresource.IgniteResource;
+import org.yyc.ignite.operator.e2e.tests.config.SharedScenarioContext;
 import org.yyc.ignite.operator.e2e.tests.config.SpringConfig;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.yyc.ignite.operator.e2e.tests.utils.BuildIgniteResourceUtils.DEFAULT_NAMESPACE;
@@ -26,6 +29,8 @@ import static org.yyc.ignite.operator.e2e.tests.utils.BuildIgniteResourceUtils.D
 public class UtilsSteps {
     @Autowired
     private KubernetesClient kubernetesClient;
+    @Autowired
+    private SharedScenarioContext sharedScenarioContext;
     
     @Then("Sleep for {int} seconds")
     public static void sleepForSeconds(int seconds) throws InterruptedException {
@@ -39,5 +44,10 @@ public class UtilsSteps {
                 .inNamespace(DEFAULT_NAMESPACE)
                 .withName(resourceName);
         Assert.assertNull(resource.get());
+    }
+    
+    @Given("the following IgniteResources configurations \\(they should not exist for now)")
+    public void igniteResourcesConfigurations(List<Map<String, String>> configurations) {
+        sharedScenarioContext.addTestResources(configurations);
     }
 }

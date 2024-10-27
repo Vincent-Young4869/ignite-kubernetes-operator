@@ -1,6 +1,7 @@
 package org.yyc.ignite.operator.api.utils;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -31,6 +32,21 @@ public class XmlUpdateUtils {
     public static final String IGNITE_DATA_STORAGE_CONFIGURATION = "org.apache.ignite.configuration.DataStorageConfiguration";
     private static final String IGNITE_DATA_REGION_CONFIG = "org.apache.ignite.configuration.DataRegionConfiguration";
     private static final String IGNITE_K8S_IP_FINDER = "org.apache.ignite.spi.discovery.tcp.ipfinder.kubernetes.TcpDiscoveryKubernetesIpFinder";
+    
+    public static String getDataRegionSizeFromXml(String data) {
+        Document doc = parseStringToXmlDoc(data);
+        doc.getDocumentElement().normalize();
+        NodeList beanList = doc.getElementsByTagName(BEAN.tagValue());
+        for (int i = 0; i < beanList.getLength(); i++) {
+            Element bean = (Element) beanList.item(i);
+            if (isRelationalDataRegion(bean)) {
+                Element dataRegionProperty = getDataRegionProperty(bean);
+                Objects.requireNonNull(dataRegionProperty, "dataRegionProperty cannot be null in the configmap data");
+                return dataRegionProperty.getAttribute(VALUE.tagValue());
+            }
+        }
+        return StringUtils.EMPTY;
+    }
     
     // TODO: investigate a better way to manipulate xml file
     public static String updateConfigMapXmlData(String data,
@@ -127,6 +143,18 @@ public class XmlUpdateUtils {
                 property.setAttribute(VALUE.tagValue(), String.format("#{%s}", size));
             }
         }
+    }
+    
+    private static Element getDataRegionProperty(Element bean) {
+        NodeList propertyList = bean.getElementsByTagName(PROPERTY.tagValue());
+        for (int j = 0; j < propertyList.getLength(); j++) {
+            Element property = (Element) propertyList.item(j);
+            if ("initialSize".equals(property.getAttribute(NAME.tagValue()))
+                    || "maxSize".equals(property.getAttribute(NAME.tagValue()))) {
+                return property;
+            }
+        }
+        return null;
     }
     
     private static String getChildPropertyValue(Element bean, String propertyName) {
