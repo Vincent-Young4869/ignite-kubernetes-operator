@@ -38,7 +38,7 @@ tasks.register('cucumber') {
                     '--plugin', 'json:build/cucumber.json',
                     '--glue', 'org.yyc.ignite.operator.e2e.tests.steps',
                     'src/test/resources/org.yyc.ignite.operator.e2e.tests.features',
-                    '--threads', '10']
+                    '--threads', '2']
         }
     }
 }
