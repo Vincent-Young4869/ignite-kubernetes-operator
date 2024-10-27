@@ -12,6 +12,7 @@ import org.yyc.ignite.operator.api.utils.TemplateFileLoadUtils;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.buildDependentResourceName;
 import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.newK8sMetadataBuilder;
 import static org.yyc.ignite.operator.api.utils.XmlUpdateUtils.updateConfigMapXmlData;
 
@@ -32,7 +33,7 @@ public class IgniteConfigMapResource extends CRUDKubernetesDependentResource<Con
         String updatedConfigData = updateConfigMapXmlData(CONFIG_DATA,
                 primary.getSpec().getIgniteConfigMapSpec(),
                 primary.getSpec().getPersistenceSpec(),
-                primary.getMetadata().getName() + "-" + IgniteServiceResource.COMPONENT,
+                buildDependentResourceName(primary, IgniteServiceResource.COMPONENT),
                 primary.getMetadata().getNamespace());
         Map<String, String> data = new HashMap<>();
         data.put(NODE_CONFIG_FILE_NAME, updatedConfigData);

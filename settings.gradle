@@ -2,3 +2,5 @@ rootProject.name = 'yyc-ignite-operator'
 include 'examples'
 include 'ignite-kubernetes-operator-api'
 include 'ignite-kubernetes-operator'
+include 'e2e-tests'
+

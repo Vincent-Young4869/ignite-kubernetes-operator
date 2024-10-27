@@ -11,18 +11,20 @@ the [flink-kubernetes-operator](https://github.com/apache/flink-kubernetes-opera
 
 Currently, the repo includes 3 modules:
 
+- **ignite operator**
+    - the implementation of k8s operator for apache ignite, based on JOSDK.
+- **ignite kubernetes operator api**
+    - defines ignite CRD and its related data models to allow users to manage ignite resource programmatically.
 - **examples**
-    - code examples to deploy ignite resource through fabric8 api
-    - sample manifests (`resources/cr/ignite-cluster.yaml`) to deploy ignite resource through `kubectl`
-    - sample manifests (`resources/operator`) to deploy ignite operator
+    - code examples to deploy ignite resources through fabric8 api.
+    - sample manifests (`resources/cr/ignite-cluster.yaml`) to deploy ignite resource through `kubectl`.
+    - sample manifests (`resources/operator`) to deploy ignite operator.
     - sample manifests (`resources/samples`) to deploy an ignite cluster without ignite operator (this is currently the
       common way to deploy ignite cluster, refer
       to [ignite official doc](https://ignite.apache.org/docs/2.16.0/installation/kubernetes/gke-deployment) for more
-      details)
-- **ignite kubernetes operator api**
-    - defines ignite CRD and its related data models to allow users to manage ignite resource programmatically.
-- **ignite operator**
-    - the implementation of k8s operator for apache ignite, based on JOSDK.
+      details).
+- **e2e-tests**
+    - end-to-end behavioural tests (only happy path) to automate the tests for creating and deleting ignite resources.
 
 ## Features Summary
 

@@ -33,9 +33,9 @@ import java.util.List;
  */
 public class CreateMultipleClusters {
     public static void main(String[] args) {
-        IgniteResource resource1 = createIgniteResource("resource1", "ignite", 1, 120, false);
-        IgniteResource resource2 = createIgniteResource("resource2", "ignite", 2, 110, true);
-        IgniteResource resource3 = createIgniteResource("resource3", "yyc-test", 1, 100, false);
+        IgniteResource resource1 = createIgniteResource("resource1", "ignite", 1,  120, true);
+        IgniteResource resource2 = createIgniteResource("resource2", "ignite", 2,  110, false);
+        IgniteResource resource3 = createIgniteResource("resource3", "yyc-test", 1,100, true);
         List<IgniteResource> resources = Arrays.asList(resource1, resource2, resource3);
         
         // resources.parallelStream().forEach(CreateMultipleClusters::createResource);
@@ -82,11 +82,11 @@ public class CreateMultipleClusters {
         igniteNodeSpec.setIgniteVersion("8.8.42-openjdk17");
         igniteNodeSpec.setIgniteOptionalLibs("ignite-kubernetes,ignite-rest-http");
         igniteNodeSpec.setJvmOpts("-DIGNITE_WAL_MMAP=false -DIGNITE_WAIT_FOR_BACKUPS_ON_SHUTDOWN=true "
-                + "-server -Xms1G -Xmx1G -XX:+AlwaysPreTouch -XX:+UseG1GC -XX:+ScavengeBeforeFullGC "
+                + "-server -Xms700m -Xmx700m -XX:+AlwaysPreTouch -XX:+UseG1GC -XX:+ScavengeBeforeFullGC "
                 + "-XX:+DisableExplicitGC -XX:MetaspaceSize=200M -XX:MinMetaspaceFreeRatio=40 "
                 + "-XX:MaxMetaspaceFreeRatio=60");
         igniteNodeSpec.setIgniteNodeCpu("1");
-        igniteNodeSpec.setIgniteNodeMemory("2Gi");
+        igniteNodeSpec.setIgniteNodeMemory("1Gi");
         return igniteNodeSpec;
     }
     

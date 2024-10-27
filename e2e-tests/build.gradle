@@ -1,0 +1,44 @@
+plugins {
+    id 'application'
+}
+
+dependencies {
+    implementation project(":ignite-kubernetes-operator")
+    implementation project(":ignite-kubernetes-operator-api")
+
+    testImplementation "io.cucumber:cucumber-java:${cucumberVersion}"
+    testImplementation "io.cucumber:cucumber-junit-platform-engine:${cucumberVersion}"
+    testImplementation "io.cucumber:cucumber-junit:${cucumberVersion}"
+    testImplementation "io.cucumber:cucumber-spring:${cucumberVersion}"
+    testImplementation "io.cucumber:cucumber-core:${cucumberVersion}"
+
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'com.vaadin.external.google', module: 'android-json'
+    }
+}
+
+configurations {
+    cucumberRuntime {
+        extendsFrom testImplementation
+    }
+}
+
+application {
+    mainClassName = 'org.yyc.ignite.operator.e2e.tests.RunBehaviorTest'
+}
+
+tasks.register('cucumber') {
+    dependsOn assemble, compileTestJava, build
+
+    doLast {
+        javaexec {
+            main = "io.cucumber.core.cli.Main"
+            classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
+            args = ['--plugin', 'pretty',
+                    '--plugin', 'json:build/cucumber.json',
+                    '--glue', 'org.yyc.ignite.operator.e2e.tests.steps',
+                    'src/test/resources/org.yyc.ignite.operator.e2e.tests.features',
+                    '--threads', '10']
+        }
+    }
+}
