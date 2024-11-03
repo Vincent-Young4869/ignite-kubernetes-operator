@@ -25,12 +25,10 @@ public class IgniteStatus extends ObservedGenerationAwareStatus {
     private List<IgniteClusterLifecycleStateEnum> historyStates = new ArrayList<>(List.of(IgniteClusterLifecycleStateEnum.CREATED));
     private String errorMessage;
     
+    // TODO: include timestamp into historyStates, consider use Queue/Stack
     public synchronized void updateLifecycleState(IgniteClusterLifecycleStateEnum nextState) {
-        if (!nextState.equals(igniteClusterLifecycleState)) {
-            log.info("{} -> {}", this.igniteClusterLifecycleState, nextState);
-            lastLifecycleStateTimestamp = currentTimestamp();
-            igniteClusterLifecycleState = nextState;
-            historyStates.add(0, nextState);
-        }
+        lastLifecycleStateTimestamp = currentTimestamp();
+        igniteClusterLifecycleState = nextState;
+        historyStates.add(0, nextState);
     }
 }
