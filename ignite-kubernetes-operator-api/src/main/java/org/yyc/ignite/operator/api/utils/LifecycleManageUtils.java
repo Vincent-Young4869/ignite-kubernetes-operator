@@ -33,13 +33,9 @@ public class LifecycleManageUtils {
     
     public static void statusTransitTo(IgniteResource igniteResource, IgniteClusterLifecycleStateEnum newState) {
         IgniteClusterLifecycleStateEnum currentState = igniteResource.getStatus().getIgniteClusterLifecycleState();
-        
         if (isTransitionAllowed(currentState, newState)) {
             log.info("[ignite resource {}]: {} -> {}", igniteResource.getMetadata().getName(), currentState, newState);
             igniteResource.getStatus().updateLifecycleState(newState);
-        } else {
-            log.warn("Invalid transition for [ignite resource {}]: {} -> {}",
-                    igniteResource.getMetadata().getName(), currentState, newState);
         }
     }
     
