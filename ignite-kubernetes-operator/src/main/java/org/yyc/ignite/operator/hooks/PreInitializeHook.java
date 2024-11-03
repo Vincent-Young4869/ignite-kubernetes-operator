@@ -15,6 +15,7 @@ import org.yyc.ignite.operator.dependentresource.IgniteStatefulSetResource;
 import java.util.Objects;
 
 import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.buildDependentResourceName;
+import static org.yyc.ignite.operator.api.utils.LifecycleManageUtils.statusTransitTo;
 import static org.yyc.ignite.operator.api.utils.TimeUtils.currentTimestamp;
 
 @Slf4j
@@ -40,16 +41,13 @@ public class PreInitializeHook implements Condition<IgniteSaResource, IgniteReso
             //  link to the ticket: https://github.com/kubernetes/enhancements/issues/3541, https://github.com/kubernetes/kubernetes/issues/120123
             case TERMINATING, FAILED:
                 return false;
+            case CREATED, INITIALIZING, DEPLOYING, RECOVERING:
+                return true;
             case INACTIVE_RUNNING, ACTIVE_RUNNING:
                 if (isRunningIgniteClusterHealthy(igniteResource, client)) {
                     return true;
                 }
-                igniteResource.getStatus().updateLifecycleState(IgniteClusterLifecycleStateEnum.RECOVERING);
-                break;
-            case CREATED, DEPLOYING, RECOVERING:
-                return true;
-            case INITIALIZING:
-                igniteResource.getStatus().updateLifecycleState(IgniteClusterLifecycleStateEnum.DEPLOYING);
+                statusTransitTo(igniteResource, IgniteClusterLifecycleStateEnum.RECOVERING);
                 break;
         }
         

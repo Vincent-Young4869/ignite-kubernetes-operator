@@ -14,9 +14,9 @@ public class LifecycleManageUtils {
     
     static {
         VALID_TRANSITIONS.put(IgniteClusterLifecycleStateEnum.CREATED,
-                new IgniteClusterLifecycleStateEnum[]{IgniteClusterLifecycleStateEnum.INITIALIZING, IgniteClusterLifecycleStateEnum.TERMINATING});
+                new IgniteClusterLifecycleStateEnum[]{IgniteClusterLifecycleStateEnum.INITIALIZING, IgniteClusterLifecycleStateEnum.TERMINATING, IgniteClusterLifecycleStateEnum.FAILED});
         VALID_TRANSITIONS.put(IgniteClusterLifecycleStateEnum.INITIALIZING,
-                new IgniteClusterLifecycleStateEnum[]{IgniteClusterLifecycleStateEnum.DEPLOYING, IgniteClusterLifecycleStateEnum.TERMINATING});
+                new IgniteClusterLifecycleStateEnum[]{IgniteClusterLifecycleStateEnum.DEPLOYING, IgniteClusterLifecycleStateEnum.TERMINATING, IgniteClusterLifecycleStateEnum.FAILED});
         VALID_TRANSITIONS.put(IgniteClusterLifecycleStateEnum.DEPLOYING,
                 new IgniteClusterLifecycleStateEnum[]{IgniteClusterLifecycleStateEnum.INACTIVE_RUNNING, IgniteClusterLifecycleStateEnum.ACTIVE_RUNNING, IgniteClusterLifecycleStateEnum.FAILED, IgniteClusterLifecycleStateEnum.TERMINATING});
         VALID_TRANSITIONS.put(IgniteClusterLifecycleStateEnum.ACTIVE_RUNNING,
