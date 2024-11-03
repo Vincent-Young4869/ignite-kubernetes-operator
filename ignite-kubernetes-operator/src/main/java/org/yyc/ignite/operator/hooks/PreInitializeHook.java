@@ -20,14 +20,6 @@ import static org.yyc.ignite.operator.api.utils.TimeUtils.currentTimestamp;
 @Slf4j
 public class PreInitializeHook implements Condition<IgniteSaResource, IgniteResource> {
     
-    private static void initIgniteStatus(IgniteResource igniteResource) {
-        IgniteStatus status = IgniteStatus.builder()
-                .igniteClusterLifecycleState(IgniteClusterLifecycleStateEnum.CREATED)
-                .lastLifecycleStateTimestamp(currentTimestamp())
-                .build();
-        igniteResource.setStatus(status);
-    }
-    
     @Override
     public boolean isMet(DependentResource<IgniteSaResource, IgniteResource> dependentResource,
                          IgniteResource igniteResource,
@@ -63,6 +55,14 @@ public class PreInitializeHook implements Condition<IgniteSaResource, IgniteReso
         
         client.resource(igniteResource).updateStatus();
         return true;
+    }
+    
+    private void initIgniteStatus(IgniteResource igniteResource) {
+        IgniteStatus status = IgniteStatus.builder()
+                .igniteClusterLifecycleState(IgniteClusterLifecycleStateEnum.CREATED)
+                .lastLifecycleStateTimestamp(currentTimestamp())
+                .build();
+        igniteResource.setStatus(status);
     }
     
     private boolean isIgniteClusterNotExist(IgniteResource igniteResource, KubernetesClient client) {
