@@ -13,6 +13,8 @@ import org.yyc.ignite.operator.dependentresource.IgniteStatefulSetResource;
 
 import java.util.List;
 
+import static org.yyc.ignite.operator.api.utils.LifecycleManageUtils.statusTransitTo;
+
 @Slf4j
 public class PostDeleteHook implements Condition<IgniteStatefulSetResource, IgniteResource> {
     
@@ -25,10 +27,10 @@ public class PostDeleteHook implements Condition<IgniteStatefulSetResource, Igni
                 .list()
                 .getItems();
         if (!pods.isEmpty()) {
-            log.info("Pods not yet cleaned up: {}", pods.stream().map(p -> p.getMetadata().getName()).toList());
+            log.warn("Pods not yet cleaned up: {}", pods.stream().map(p -> p.getMetadata().getName()).toList());
             
             IgniteResource latestResource = client.resource(resource).get();
-            latestResource.getStatus().updateLifecycleState(IgniteClusterLifecycleStateEnum.TERMINATING);
+            statusTransitTo(latestResource, IgniteClusterLifecycleStateEnum.TERMINATING);
             client.resource(latestResource).updateStatus();
             
             return false;

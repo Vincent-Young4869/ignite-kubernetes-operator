@@ -8,6 +8,8 @@ import org.yyc.ignite.operator.api.customresource.IgniteResource;
 import org.yyc.ignite.operator.api.type.lifecycle.IgniteClusterLifecycleStateEnum;
 import org.yyc.ignite.operator.dependentresource.IgniteSaResource;
 
+import static org.yyc.ignite.operator.api.utils.LifecycleManageUtils.statusTransitTo;
+
 public class InitializeHook implements Condition<IgniteSaResource, IgniteResource> {
     @Override
     public boolean isMet(DependentResource<IgniteSaResource, IgniteResource> dependentResource,
@@ -15,7 +17,7 @@ public class InitializeHook implements Condition<IgniteSaResource, IgniteResourc
                          Context<IgniteResource> context) {
         if (igniteResource.getStatus().getIgniteClusterLifecycleState().equals(IgniteClusterLifecycleStateEnum.CREATED)) {
             KubernetesClient client = context.getClient();
-            igniteResource.getStatus().updateLifecycleState(IgniteClusterLifecycleStateEnum.INITIALIZING);
+            statusTransitTo(igniteResource, IgniteClusterLifecycleStateEnum.INITIALIZING);
             IgniteResource latestResource = client.resource(igniteResource).get();
             client.resource(latestResource).updateStatus();
         }

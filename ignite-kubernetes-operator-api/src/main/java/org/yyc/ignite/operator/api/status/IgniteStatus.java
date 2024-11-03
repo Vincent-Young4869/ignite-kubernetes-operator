@@ -22,15 +22,16 @@ public class IgniteStatus extends ObservedGenerationAwareStatus {
     private IgniteClusterLifecycleStateEnum igniteClusterLifecycleState;
     private String lastLifecycleStateTimestamp;
     @Builder.Default
-    private List<IgniteClusterLifecycleStateEnum> historyStates = new ArrayList<>(List.of(IgniteClusterLifecycleStateEnum.CREATED));
+    private final List<IgniteClusterLifecycleStateEnum> historyStates = new ArrayList<>(List.of(IgniteClusterLifecycleStateEnum.CREATED));
     private String errorMessage;
     
-    public synchronized void updateLifecycleState(IgniteClusterLifecycleStateEnum nextState) {
-        if (!nextState.equals(igniteClusterLifecycleState)) {
-            log.info("{} -> {}", this.igniteClusterLifecycleState, nextState);
-            lastLifecycleStateTimestamp = currentTimestamp();
-            igniteClusterLifecycleState = nextState;
-            historyStates.add(0, nextState);
+    public void updateLifecycleState(IgniteClusterLifecycleStateEnum nextState) {
+        lastLifecycleStateTimestamp = currentTimestamp();
+        igniteClusterLifecycleState = nextState;
+        synchronized (historyStates) {
+            if (historyStates.isEmpty() || !historyStates.get(0).equals(nextState)) {
+                historyStates.add(0, nextState);
+            }
         }
     }
 }

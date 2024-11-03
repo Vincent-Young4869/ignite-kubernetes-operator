@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.yyc.ignite.operator.api.utils.DependentResourceUtils.buildDependentResourceName;
+import static org.yyc.ignite.operator.api.utils.LifecycleManageUtils.statusTransitTo;
 import static org.yyc.ignite.operator.api.utils.TimeUtils.isReconcileDurationExceeded;
 
 
@@ -62,7 +63,7 @@ public class IgniteResourceReconciler implements
     @Override
     public UpdateControl<IgniteResource> reconcile(IgniteResource resource, Context<IgniteResource> context) throws Exception {
         IgniteClusterLifecycleStateEnum nextLifecycleState = getNextLifecycleState(resource, context);
-        resource.getStatus().updateLifecycleState(nextLifecycleState);
+        statusTransitTo(resource, nextLifecycleState);
         if (nextLifecycleState.equals(IgniteClusterLifecycleStateEnum.FAILED)) {
             resource.getStatus().setErrorMessage("the cluster fails to be created due to insufficient number of pods, " +
                     "please inspect pod events or logs for troubleshooting.");
@@ -117,7 +118,7 @@ public class IgniteResourceReconciler implements
     @Override
     public ErrorStatusUpdateControl<IgniteResource> updateErrorStatus(IgniteResource resource,
                                                                       Context<IgniteResource> context, Exception e) {
-        resource.getStatus().updateLifecycleState(IgniteClusterLifecycleStateEnum.FAILED);
+        statusTransitTo(resource, IgniteClusterLifecycleStateEnum.FAILED);
         resource.getStatus().setErrorMessage("Exception occurs during reconciliation, please contact ignite operator developer.");
         log.error("Exception occurs during reconciliation: {}", e.getMessage());
         return ErrorStatusUpdateControl.patchStatus(resource).withNoRetry();
