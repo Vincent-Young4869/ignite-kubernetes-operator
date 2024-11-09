@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "helm.name" -}}
+{{- define "ignite-operator.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "helm.fullname" -}}
+{{- define "ignite-operator.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -53,10 +53,24 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "helm.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "helm.fullname" .) .Values.serviceAccount.name }}
+{{- define "ignite-operator.serviceAccount.name" -}}
+{{- printf "%s-%s" (include "ignite-operator.name" .) .Values.serviceAccount.nameSuffix }}
+{{- end }}
+
+{{/*
+Create the name of the cluster role to use
+*/}}
+{{- define "ignite-operator.clusterRole.name" -}}
+{{- printf "%s-%s" (include "ignite-operator.name" .) .Values.clusterRole.nameSuffix }}
+{{- end }}
+
+{{/*
+Create the path of the operator image to use
+*/}}
+{{- define "ignite-operator.imagePath" -}}
+{{- if .Values.image.digest }}
+{{- .Values.image.repository }}@{{ .Values.image.digest }}
 {{- else }}
-{{- default "default" .Values.serviceAccount.name }}
+{{- .Values.image.repositoryHost }}/{{- .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}
 {{- end }}
 {{- end }}
