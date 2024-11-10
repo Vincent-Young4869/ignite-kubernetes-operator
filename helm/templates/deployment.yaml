@@ -18,10 +18,10 @@ spec:
         - name: {{ include "ignite-operator.name" . }}
           image: {{ include "ignite-operator.imagePath" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-      securityContext:
-          {{- toYaml .Values.containerSecurityContext | nindent 12}}
-      resources:
-          {{- toYaml .Values.resources | nindent 12 }}
-      ports:
-        - name: http
-          containerPort: {{ .Values.service.httpPort }}
+          securityContext:
+              {{- toYaml .Values.containerSecurityContext | nindent 12}}
+          resources:
+              {{- toYaml .Values.resources | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.httpPort }}
