@@ -44,13 +44,12 @@ def loadConfiguration() {
 
     def projectVersion = semver.version
     ext.setProperty("projectVersion", projectVersion)
-    ext.setProperty("imageTag", projectVersion)
 
     def jarFileName = "${projectName}-${projectVersion}.jar"
     ext.setProperty("jarFileName", jarFileName)
 
-    def jarArchivePath = "$buildDir/libs/$jarFileName"
-    ext.setProperty("jarArchivePath", jarArchivePath)
+    def fullImagePath = "$config.dockerhub_name/$projectName:$projectVersion"
+    ext.setProperty("fullImagePath", fullImagePath)
 }
 
 tasks.register('dockerLogin') {
@@ -75,8 +74,8 @@ bootJar {
 
 tasks.register('assembleDocker', Copy) {
     dependsOn build
-    from jarArchivePath
-    into Paths.get(buildDir as String, 'docker')
+    from "${layout.buildDirectory.get() as String}/libs/$jarFileName"
+    into Paths.get(layout.buildDirectory.get() as String, 'docker')
 }
 
 //https://bmuschko.github.io/gradle-docker-plugin/
@@ -109,10 +108,10 @@ tasks.register('buildImage', DockerBuildImage) {
 
     inputDir.set(assembleDocker.destinationDir)
     noCache.set(true)
-    images.set(["$config.dockerhub_name/$projectName:$imageTag"])
+    images.set(["$fullImagePath"])
 }
 
 tasks.register('pushImage', DockerPushImage) {
     dependsOn buildImage
-    images.set(["$config.dockerhub_name/$projectName:$imageTag"])
+    images.set(["$fullImagePath"])
 }
