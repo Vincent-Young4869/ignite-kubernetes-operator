@@ -26,12 +26,10 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
 
 import java.nio.file.Paths
 
-//load "config" property from gradle-properties.groovy
 loadConfiguration()
 
 def loadConfiguration() {
     def imgRegistry = hasProperty('imgRegistry') ? imgRegistry : 'personal_dockerhub'
-
     if (!['personal_dockerhub', 'public_registry'].contains(imgRegistry)) {
         System.err.println("Please set -PimgRegistry to personal_dockerhub, or public_registry")
         System.exit(1)
