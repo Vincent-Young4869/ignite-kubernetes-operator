@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ignite-kubernetes-operator
+description: A Helm chart for Ignite Kubernetes Operator
+type: application
+version: 1.0.0-SNAPSHOT
+appVersion: 1.0.0-SNAPSHOT

@@ -8,12 +8,7 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    // https://mvnrepository.com/artifact/io.javaoperatorsdk/operator-framework-spring-boot-starter
-    implementation 'io.javaoperatorsdk:operator-framework-spring-boot-starter:5.5.0'
-    // https://mvnrepository.com/artifact/org.springframework.retry/spring-retry
-    implementation 'org.springframework.retry:spring-retry:2.0.9'
-    // https://mvnrepository.com/artifact/org.springframework/spring-aspects
-    implementation 'org.springframework:spring-aspects:6.1.13'
+    implementation "io.javaoperatorsdk:operator-framework-spring-boot-starter:${josdkSpringVersion}"
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -26,54 +21,31 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
 
 import java.nio.file.Paths
 
-//load "config" property from gradle-properties.groovy
 loadConfiguration()
 
 def loadConfiguration() {
-    def imgRegistry = hasProperty('imgRegistry') ? imgRegistry : 'yyc'
-
-    if (!['yyc', 'local'].contains(imgRegistry)) {
-        System.err.println("Please set -PimgRegistry to yyc, or local")
+    def imgRegistry = hasProperty('imgRegistry') ? imgRegistry : 'personal_dockerhub'
+    if (!['personal_dockerhub', 'public_registry'].contains(imgRegistry)) {
+        System.err.println("Please set -PimgRegistry to personal_dockerhub, or public_registry")
         System.exit(1)
     }
-    ext.setProperty("environment", imgRegistry)
-    println("Gradle environment is set to $imgRegistry")
 
     def configFile = file('gradle-properties.groovy')
     def config = new ConfigSlurper(imgRegistry).parse(configFile.toURI().toURL())
     ext.setProperty("config", config)
 
-    def jarBaseName = project.name
-    ext.setProperty("jarBaseName", jarBaseName)
+    def projectName = project.name
+    ext.setProperty("projectName", projectName)
 
-    def jarVersion = semver.version
-    ext.setProperty("jarVersion", jarVersion)
+    def projectVersion = semver.version
+    ext.setProperty("projectVersion", projectVersion)
 
-    def jarFileName = "$project.name-${jarVersion}.jar"
+    def jarFileName = "${projectName}-${projectVersion}.jar"
     ext.setProperty("jarFileName", jarFileName)
 
-    def jarArchivePath = "$buildDir/libs/$jarFileName"
-    ext.setProperty("jarArchivePath", jarArchivePath)
-
-    def localImageTag = "$jarVersion-" + ("hostname".execute().text.trim())
-
-    if (!hasProperty('imageTag')) {//allow imageTag to be set when call gradlew
-        ext.setProperty("imageTag", imgRegistry == 'local' ? localImageTag : jarVersion)
-    }
+    def fullImagePath = "$config.dockerhub_name/$projectName:$projectVersion"
+    ext.setProperty("fullImagePath", fullImagePath)
 }
-
-tasks.register('printProps') {
-    doLast {
-        println "environment: $environment"
-        println "jarBaseName: $jarBaseName"
-        println "jarVersion: $jarVersion"
-        println "jarFileName: $jarFileName"
-        println "jarArchivePath: $jarArchivePath"
-        println "docker_expose_port: $config.docker_expose_port"
-        println "imageTag: $imageTag"
-    }
-}
-
 
 tasks.register('dockerLogin') {
     doLast {
@@ -92,32 +64,32 @@ tasks.register('dockerLogin') {
 }
 
 bootJar {
-    archiveFileName.set("$jarBaseName-$jarVersion.${archiveExtension.get()}")
+    archiveFileName.set("$projectName-$projectVersion.${archiveExtension.get()}")
 }
 
 tasks.register('assembleDocker', Copy) {
     dependsOn build
-    from jarArchivePath
-    into Paths.get(buildDir as String, 'docker')
+    from "${layout.buildDirectory.get() as String}/libs/$jarFileName"
+    into Paths.get(layout.buildDirectory.get() as String, 'docker')
 }
 
 //https://bmuschko.github.io/gradle-docker-plugin/
 tasks.register('createDockerfile', Dockerfile) {
     destFile.set(new File(assembleDocker.destinationDir as String, 'Dockerfile'))
     def workingDirPath = "/opt/$rootProject.name"
-    def jarFullName = "$workingDirPath/${jarBaseName + "-" + jarVersion}.jar"
-    from 'vincentyoung4869/ubuntu:23.10-jdk17'
+    def jarFullName = "$workingDirPath/${jarFileName}"
+    from "$config.dockerhub_name/ubuntu:23.10-jdk17"
     runCommand('''DEBIAN_FRONTEND=noninteractive apt-get update \\
-    && apt-get -y --no-install-recommends install tzdata \\
-    && apt-get clean \\
-    && rm -rf /var/lib/apt/lists/*''')
+                    && apt-get -y --no-install-recommends install tzdata \\
+                    && apt-get clean \\
+                    && rm -rf /var/lib/apt/lists/*''')
 
-    runCommand('useradd -u 11000 yyc --create-home')
-    user('yyc')
+    runCommand('useradd -u 2024 ignite_operator --create-home')
+    user('ignite_operator')
 
     volume('/tmp')
     workingDir(workingDirPath)
-    copyFile(new Dockerfile.CopyFile(jarFileName, jarFullName).withChown("yyc:yyc"))
+    copyFile(new Dockerfile.CopyFile(jarFileName, jarFullName).withChown("ignite_operator:ignite_operator"))
 
     exposePort(config.docker_expose_port)
     entryPoint('java', '-jar', jarFullName)
@@ -131,10 +103,10 @@ tasks.register('buildImage', DockerBuildImage) {
 
     inputDir.set(assembleDocker.destinationDir)
     noCache.set(true)
-    images.set(["$config.dockerhubName/$jarBaseName:$imageTag"])
+    images.set(["$fullImagePath"])
 }
 
 tasks.register('pushImage', DockerPushImage) {
     dependsOn buildImage
-    images.set(["$config.dockerhubName/$jarBaseName:$imageTag"])
+    images.set(["$fullImagePath"])
 }

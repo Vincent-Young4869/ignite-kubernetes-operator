@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ignite-operator.name" . }}-deployment
+  namespace: {{ include "ignite-operator.namespace" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      name: {{ include "ignite-operator.name" . }}
+  template:
+    metadata:
+      labels:
+        name: {{ include "ignite-operator.name" . }}
+    spec:
+      serviceAccountName: {{ include "ignite-operator.serviceAccount.name" . }}
+      containers:
+        - name: {{ include "ignite-operator.name" . }}
+          image: {{ include "ignite-operator.imagePath" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+              {{- toYaml .Values.containerSecurityContext | nindent 12}}
+          resources:
+              {{- toYaml .Values.resources | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.httpPort }}

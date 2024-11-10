@@ -8,6 +8,9 @@ plugins {
 }
 
 ext {
+    set('fabric8Version','6.13.1')
+    set('josdkVersion', '4.9.2')
+    set('josdkSpringVersion', '5.5.0')
     set('lombokVersion','1.18.22')
     set('cucumberVersion', '7.0.0')
 }
@@ -57,14 +60,9 @@ subprojects {
         testImplementation "org.projectlombok:lombok:${lombokVersion}"
         testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
-
-        // https://mvnrepository.com/artifact/io.fabric8/kubernetes-client
-        implementation 'io.fabric8:kubernetes-client:6.13.1'
-        // https://mvnrepository.com/artifact/io.fabric8/crd-generator-apt
-        annotationProcessor 'io.fabric8:crd-generator-apt:6.13.1'
-
-        // https://mvnrepository.com/artifact/io.javaoperatorsdk/operator-framework
-        implementation 'io.javaoperatorsdk:operator-framework:4.9.2'
+        implementation "io.fabric8:kubernetes-client:${fabric8Version}"
+        annotationProcessor "io.fabric8:crd-generator-apt:${fabric8Version}"
+        implementation "io.javaoperatorsdk:operator-framework:${josdkVersion}"
 
         // sha256
         // https://mvnrepository.com/artifact/commons-codec/commons-codec

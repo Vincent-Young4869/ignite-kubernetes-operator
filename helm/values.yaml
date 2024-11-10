@@ -1,0 +1,75 @@
+image:
+  repositoryHost: vincentyoung4869
+  repository: ignite-kubernetes-operator
+  tag: 1.0.0
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+imagePullSecrets: []
+
+# This is to override the chart name and namespace.
+namespaceOverride: "ignite-operator"
+nameOverride: "yyc-ignite-operator"
+fullnameOverride: ""
+
+serviceAccount:
+  annotations: {}
+  nameSuffix: "sa"
+
+clusterRole:
+  nameSuffix: "clusterrole"
+
+podAnnotations: {}
+podLabels: {}
+podSecurityContext: {}
+  # fsGroup: 2000
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  httpPort: 80
+
+resources:
+   limits:
+     cpu: 500m
+     memory: 512Mi
+   requests:
+     cpu: 500m
+     memory: 512Mi
+
+# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+
+# Additional volumes on the output Deployment definition.
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
