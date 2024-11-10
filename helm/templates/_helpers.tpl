@@ -1,4 +1,11 @@
 {{/*
+Expand the namespace of the chart.
+*/}}
+{{- define "ignite-operator.namespace" -}}
+{{- default .Chart.Name .Values.namespaceOverride | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
 Expand the name of the chart.
 */}}
 {{- define "ignite-operator.name" -}}

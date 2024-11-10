@@ -31,7 +31,7 @@ spec:
       storage: "2Gi"
   igniteConfigMapSpec:
     defaultDataRegionSize: "110 * 1024 * 1024"
-    relationalDataRegionSize: "120 * 1024 * 1024"
+    relationalDataRegionSize: "240 * 1024 * 1024"
 #    configXmlOverride: |
 #      <?xml version="1.0" encoding="UTF-8"?>
 #      <beans xmlns="http://www.springframework.org/schema/beans"

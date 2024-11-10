@@ -1,19 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: yyc-{{ .Chart.Name }}
-  namespace: {{ .Chart.Name }}
+  name: {{ include "ignite-operator.name" . }}-deployment
+  namespace: {{ include "ignite-operator.namespace" . }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      name: yyc-{{ .Chart.Name }}
+      name: {{ include "ignite-operator.name" . }}
   template:
     metadata:
       labels:
-        name: yyc-{{ .Chart.Name }}
+        name: {{ include "ignite-operator.name" . }}
     spec:
       serviceAccountName: {{ include "ignite-operator.serviceAccount.name" . }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: {{ include "ignite-operator.name" . }}
           image: {{ include "ignite-operator.imagePath" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+      securityContext:
+          {{- toYaml .Values.containerSecurityContext | nindent 12}}
+      resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+      ports:
+        - name: http
+          containerPort: {{ .Values.service.httpPort }}

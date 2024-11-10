@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: yyc-{{ .Chart.Name }}
-  namespace: {{ .Chart.Name }}
+  name: {{ include "ignite-operator.name" . }}-svc
+  namespace: {{ include "ignite-operator.namespace" . }}
   labels:
-    name: yyc-{{ .Chart.Name }}
+    name: {{ include "ignite-operator.name" . }}
 spec:
   selector:
-    name: yyc-{{ .Chart.Name }}
+    name: {{ include "ignite-operator.name" . }}
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: {{ .Values.service.port }}
+    - port: {{ .Values.service.httpPort }}
+      targetPort: {{ .Values.service.httpPort }}
       protocol: TCP

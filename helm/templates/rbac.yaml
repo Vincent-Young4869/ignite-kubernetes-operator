@@ -43,13 +43,13 @@ rules:
   - apiGroups:
       - apps
     resourceNames:
-      - yyc-{{ .Chart.Name }}
+      - {{ include "ignite-operator.name" . }}
     resources:
       - deployments/finalizers
     verbs:
       - update
   - apiGroups:
-      - com.yyc
+      - com.yyc # need to match the spec.group defined in CRD
     resources:
       - '*'
     verbs:
@@ -90,7 +90,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: {{ include "ignite-operator.serviceAccount.name" . }}
-    namespace: {{ .Chart.Name }}
+    namespace: {{ include "ignite-operator.namespace" . }}
 roleRef:
   kind: ClusterRole
   name: {{ include "ignite-operator.clusterRole.name" . }}
